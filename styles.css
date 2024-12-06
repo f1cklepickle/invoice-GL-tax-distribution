@@ -18,3 +18,15 @@ body {
   th {
     background-color: #f4f4f4;
   }
+
+  #inputTotal, #inputGl, #inputCost, #inputName {
+    color: black;
+    margin-left: 2px;
+    padding: 1px;
+    
+  }
+
+  .totalContainer, .enterItemContainer {
+    display: flex;
+    flex-direction: row;
+  }

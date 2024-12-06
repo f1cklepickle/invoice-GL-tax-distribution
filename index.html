@@ -10,9 +10,37 @@
   <body>
     <h1>GL Invoice Details</h1>
     <div>
-        <p><strong>Invoice Total: </strong><span id="invoice-total"></span></p>
-        <p><strong>Subtotal: </strong><span id="subtotal"></span></p>
-        <p><strong>Tax: </strong><span id="tax"></span></p>
+
+        <p>
+          <div class="totalContainer">
+            <strong>Invoice Total:</strong>
+            <form>
+              <input type="text" id="inputTotal">
+            </form>
+            <span id="invoice-total"></span>
+          </div>
+        </p>
+
+        <p><strong>Subtotal:</strong><span id="subtotal"></span></p>
+        <p><strong>Tax:</strong><span id="tax"></span></p>
+    </div>
+
+    <div class="enterItemContainer">
+      <table>
+        <thead>
+          <tr>
+            <th>Enter GL Number:<form>
+              <input type="text" id="inputGl">
+            </form></th>
+            <th>Enter Item Cost:<form>
+              <input type="text" id="inputCost">
+            </form></th>
+            <th>Enter Item Name: (Optional)<form>
+              <input type="text" id="inputName">
+            </form></th>
+          </tr>
+        </thead>
+      </table>
     </div>
 
     <h2>GL Details</h2>

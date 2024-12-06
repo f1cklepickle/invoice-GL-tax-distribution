@@ -1,13 +1,15 @@
 let list = []
 let itemIdNum = 1
 
-const total = Number(prompt("Enter invoice total.")).toFixed(2);
 
 let addNewGl = function() {
+
+  const total = document.getElementById("inputTotal").value;
+  
       const item = {
-        itemGL: prompt(`Item GL`),
-        itemName: prompt(`Item Name`),
-        itemCost: Number(prompt(`Item Cost`)),
+        itemGL: document.getElementById("inputGl").value,
+        itemName: document.getElementById("inputName").value,
+        itemCost: Number(document.getElementById("inputCost").value),
         itemId: itemIdNum
     };
     list.push(item);
@@ -62,7 +64,9 @@ let addNewGl = function() {
           };
         });
       };
-    
+        
+      
+
     console.log("Sorted GL:");
     console.log(sortedGL);
     console.log("Total Cost by GL:");
@@ -75,9 +79,9 @@ let addNewGl = function() {
     document.addEventListener("DOMContentLoaded", () => {
     
     const addButton = document.getElementById("add-item-button").addEventListener("click", addNewGl);
-    
     },);
-    
+
+   
     const subTotal = getSubTotal();
     document.getElementById("invoice-total").innerText = Number(total).toFixed(2);
     document.getElementById("subtotal").innerText = subTotal.toFixed(2);
