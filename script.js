@@ -1,7 +1,6 @@
 let list = []
 let itemIdNum = 1
 
-
 let addNewGl = function() {
 
   const total = document.getElementById("inputTotal").value;
@@ -65,8 +64,6 @@ let addNewGl = function() {
         });
       };
         
-      
-
     console.log("Sorted GL:");
     console.log(sortedGL);
     console.log("Total Cost by GL:");
@@ -80,37 +77,96 @@ let addNewGl = function() {
     
     const addButton = document.getElementById("add-item-button").addEventListener("click", addNewGl);
     },);
-
    
     const subTotal = getSubTotal();
     document.getElementById("invoice-total").innerText = Number(total).toFixed(2);
     document.getElementById("subtotal").innerText = subTotal.toFixed(2);
     document.getElementById("tax").innerText = getTax().toFixed(2);
-    
-    const glTableBody = document.querySelector("#gl-table tbody");
-    glTableBody.innerHTML = "";
+
+
+    const glTable = document.querySelector("#gl-table");
+    glTable.style.cssText = "width: 100%;"
+    glTable.innerHTML = "";
     const glDetails = addTax();
     
     glDetails.forEach((gl) => {
-      const row = document.createElement("tr");
+
+    const glRow = document.createElement("tr");
+    glRow.setAttribute("id", "gl-row");
+    glRow.style.cssText = "width: 100%; display: flex;";
     
-    const glNumberCell = document.createElement("td");
-    glNumberCell.innerText = gl.glNumber;
+    const glNumberCell = document.createElement("th");
+      glNumberCell.innerText = `GL Number: ${gl.glNumber}`;
+      glNumberCell.style.cssText = "flex-grow: 1;";
+
+    const glSubtotalCell = document.createElement("th");
+      glSubtotalCell.innerText = `GL Subtotal: ${gl.glTotal}`;
+      glSubtotalCell.style.cssText = "flex-grow: 1;";
+
+    const glTotalCell = document.createElement("th");
+      glTotalCell.innerText = `GL Total: ${gl.glAfterTax}`;
+      glTotalCell.style.cssText = "flex-grow: 1;";
+
+    const glTaxCell = document.createElement("th");
+      glTaxCell.innerText = `GL Tax: ${gl.glTax}`;
+      glTaxCell.style.cssText = "flex-grow: 1;";
+
+    const glDivider = document.createElement("div");
+      glDivider.setAttribute("data-glNumber", `${gl.glNumber}`);
+      glDivider.setAttribute("id", "glDivider");
+
+    const itemBox = document.createElement("div");
+      itemBox.setAttribute("data-glItemBox", `${gl.glNumber}`)
+      itemBox.style.cssText = "display: flex; flex-direction: column; width: 100%; height: 225px; background-color: white; padding: 10px; border: outset; boder-color: #5ebfff; overflow: auto; "
+
     
-    const glSubtotalCell = document.createElement("td");
-      glSubtotalCell.innerText = gl.glTotal;
-    
-    const glTotalCell = document.createElement("td");
-    glTotalCell.innerText = gl.glAfterTax;
-    
-    const glTaxCell = document.createElement("td");
-    glTaxCell.innerText = gl.glTax;
-    
-    row.appendChild(glNumberCell);
-    row.appendChild(glSubtotalCell);
-    row.appendChild(glTaxCell);
-    row.appendChild(glTotalCell);
-    
-    glTableBody.appendChild(row);
+    glRow.appendChild(glNumberCell);
+    glRow.appendChild(glSubtotalCell);
+    glRow.appendChild(glTaxCell);
+    glRow.appendChild(glTotalCell);
+    glDivider.appendChild(glRow);
+    glDivider.appendChild(itemBox);
+
+    glTable.appendChild(glDivider);
+
     },);
-    };
+
+  const itemList = list;
+
+  itemList.forEach((item) => {
+
+    const targetItemBox = document.querySelector(`div[data-glItemBox='${item.itemGL}']`);
+
+    const listItem = document.createElement("tr");
+      listItem.style.cssText = "";
+
+      const listItemGL = document.createElement("td");
+        listItemGL.innerText = `Item GL: ${item.itemGL}`;
+        listItemGL.style.cssText = "";
+
+      const listItemName = document.createElement("td");
+        listItemName.innerText = `Item Name: ${item.itemName}`;
+        listItemName.style.cssText = "";
+
+      const listItemCost = document.createElement("td");
+        listItemCost.innerText = `Item Cost: ${item.itemCost}`;
+        listItemCost.style.cssText = "";
+
+      const listItemId = document.createElement("td");
+        listItemId.innerText = `Item ID: ${item.itemId}`;
+        listItemId.style.cssText = "";
+
+      const listItemX = document.createElement("td");
+        listItemX.innerHTML = "<button id='xBtn'>X</button>";
+        listItemX.style.cssText = "";
+
+    listItem.appendChild(listItemGL);
+    listItem.appendChild(listItemName);
+    listItem.appendChild(listItemCost);
+    listItem.appendChild(listItemId);
+    listItem.appendChild(listItemX);
+    
+    targetItemBox.appendChild(listItem);
+  },)
+
+  };
