@@ -14,9 +14,9 @@
         <p>
           <div class="totalContainer">
             <strong>Invoice Total:</strong>
-            <form>
+            <div>
               <input type="text" id="inputTotal">
-            </form>
+            </div>
             <span id="invoice-total"></span>
           </div>
         </p>
@@ -29,29 +29,35 @@
       <table>
         <thead>
           <tr>
-            <th>Enter GL Number:<form>
+            <th>Enter GL Number:<div>
               <input type="text" id="inputGl">
-            </form></th>
-            <th>Enter Item Cost:<form>
+            </div></th>
+            <th>Enter Item Cost:<div>
               <input type="text" id="inputCost">
-            </form></th>
-            <th>Enter Item Name: (Optional)<form>
+            </div></th>
+            <th>Enter Item Name: (Optional)<div>
               <input type="text" id="inputName">
-            </form></th>
+            </div></th>
           </tr>
         </thead>
       </table>
     </div>
 
     <h2>GL Details</h2>
-    <div id="detailsContainer">
-      <table id="gl-table">
-        <thead>
-          <tr>
+    <div id="detailsContentContainer">
+      <div id="bookmarkList">
+        <ul id="marksExtra">
+        </ul>
+      </div>
+      <div id="detailsContainer">
+        <table id="gl-table">
+          <thead>
+            <tr>
            
-          </tr>
-        </thead>
-      </table>
+            </tr>
+          </thead>
+        </table>
+      </div>
     </div>
 
     <button id="add-item-button" onclick="addNewGl()"> Add New Item</button>

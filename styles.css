@@ -4,14 +4,16 @@ body {
   }
 
   #detailsContainer {
-    max-width: 90%;
+    max-width: 80%;
     height: 530px;
     border: inset;
     border-width: 5px;
     border-color: rgb(170, 170, 170);
     background-color: rgb(212, 212, 212);
     overflow: auto;
-    margin-left: auto;
+    margin-left: 20px;
+    flex-grow: 100;
+   
    }
   
   table {
@@ -44,7 +46,46 @@ body {
   }
 
   #xBtn {
-    background-color: rgb(245, 60, 54);
+    background-color: rgb(245, 96, 91);
   }
+
+   #detailsContentContainer {
+    display: flex;
+    flex-direction: row;
+   }
+
+   #bookmarkList {
+    display: flex;
+    height: 530px;
+    max-width: 20%;
+    background-color:  rgb(212, 212, 212);
+    flex-grow: 1;
+    flex-shrink: 0;
+    border: inset;
+    border-width: 5px;
+    border-color: rgb(170, 170, 170);
+   }
+
+    #marksExtra {
+      list-style: none;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      text-align: center;
+      align-items: center;
+    }
+
+     #linkSelector {
+      text-decoration: none;
+      color: inherit;
+     }
+
+     .input-focus {
+      background-color: lightblue;
+     }
+
+   
 
  
