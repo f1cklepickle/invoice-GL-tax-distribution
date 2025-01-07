@@ -27,7 +27,7 @@ function addNewGl(item = null) {
   const total = document.getElementById("inputTotal").value;
   
       const newItem = item || {
-        itemGL: document.getElementById("inputGl").value,
+        itemGL: document.getElementById("inputGl").value || "Blank",
         itemName: document.getElementById("inputName").value,
         itemCost: Number(document.getElementById("inputCost").value || 0),
         itemId: itemIdNum,
@@ -46,6 +46,12 @@ function addNewGl(item = null) {
           }
         }
 
+        
+    if (newItem.itemGL === "Blank") {
+      alert("Please enter GL number");
+      return;
+    }
+
     if(!item) {
     list.push(newItem);
         itemIdNum++;    
@@ -54,7 +60,7 @@ function addNewGl(item = null) {
      let sortedGL = list.reduce((GL , newItem) => {
       if (!GL[newItem.itemGL]) {
         GL[newItem.itemGL] = [];
-    }
+    } 
         GL[newItem.itemGL].push(newItem);
         return GL;
     }, {});
@@ -101,14 +107,6 @@ function addNewGl(item = null) {
         });
 
       };
-
-      const costFocus = document.getElementById('inputCost');
-        
-        costFocus.addEventListener('focus', function() {
-          this.select();
-        });
-
-        costFocus.focus();
         
     console.log("Sorted GL:");
     console.log(sortedGL);
@@ -196,6 +194,9 @@ function addNewGl(item = null) {
       });
     });
 
+    } else if (bookmarkBox.querySelector(`.glMark${gl.glNumber}`)) {
+      updateBookmark = document.querySelector(`.glMark${gl.glNumber}`)
+      updateBookmark.innerHTML = `<a><strong>GL Number:</strong> ${(gl.glNumber)} - <strong>GL Total:</strong> ${gl.glAfterTax}</a>`;
     }
 
     glRow.appendChild(glNumberCell);
@@ -267,8 +268,14 @@ function addNewGl(item = null) {
   function removeTarget() {
     this.closest('tr').remove();
   };
-  const targetInput = document.querySelector('#inputCost');
-  targetInput.focus();
+  const costFocus = document.getElementById('inputCost');
+      costFocus.addEventListener('focus', function() {
+      this.select();
+  });
+
+  costFocus.blur();
+
+  costFocus.focus();
 };
 
 function renderList() {
@@ -277,7 +284,6 @@ function renderList() {
     clearBookmarks.innerHTML = "";
 
   const clearGlTable = document.querySelector('#gl-table');
-  console.log(clearBookmarks, clearGlTable)
     clearGlTable.innerHTML = "";
 
   function getUpdatedList() {
