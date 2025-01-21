@@ -8,7 +8,14 @@
   </head>
  
   <body>
-    <h1>GL Invoice Details</h1>
+    <div class="toolbarContainer">
+      <span class="profile">Profile</span>
+      <span class="settings">Settings</span>
+      <span class="shortcuts">Shortcuts</span>
+    </div>
+
+  <div class="invoiceSearchContainer">
+    <div class="invoiceDetailsContainer">
     <div>
 
         <p>
@@ -20,10 +27,20 @@
             <span id="invoice-total"></span>
           </div>
         </p>
+    </div>
 
         <p><strong>Subtotal:</strong><span id="subtotal"></span></p>
         <p><strong>Tax:</strong><span id="tax"></span></p>
     </div>
+
+    <div class="searchBoxContainer">
+      <div class="searchContainer">
+        <button class="searchBtn" tabindex="-1">Search:</button>
+        <input type="text" id="inputSearch" tabindex="-1">
+      </div>
+      <div class="resultsContainer">Search Results</div>
+    </div>
+  </div>
 
     <div class="enterItemContainer">
       <table>
@@ -42,8 +59,8 @@
         </thead>
       </table>
     </div>
-
-    <h2>GL Details</h2>
+  <div class="detailsBorder">
+    <div class="detailsAccent">GL Details</div>
     <div id="detailsContentContainer">
       <div id="bookmarkList">
         <ul id="marksExtra">
@@ -59,8 +76,15 @@
         </table>
       </div>
     </div>
+    
 
     <button id="add-item-button" onclick="addNewGl()"> Add New Item</button>
+  </div>
+
+    <div class="footer">
+      <span>Created - 2025</span>
+      <span>Source code & Github profile: <a href="https://github.com/f1cklepickle" rel="noopener noreferer" target="_blank">Harrison Bruhl</a></span>
+    </div>
 
     <script src=script.js></script>
   </body>

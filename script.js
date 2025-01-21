@@ -29,7 +29,7 @@ function addNewGl(item = null) {
       const newItem = item || {
         itemGL: document.getElementById("inputGl").value || "Blank",
         itemName: document.getElementById("inputName").value,
-        itemCost: Number(document.getElementById("inputCost").value || 0),
+        itemCost: Number(document.getElementById("inputCost").value).toFixed(2) || 0,
         itemId: itemIdNum,
         btnId: getBtnId(),
         removeItem: function(event) {
@@ -50,7 +50,10 @@ function addNewGl(item = null) {
     if (newItem.itemGL === "Blank") {
       alert("Please enter GL number");
       return;
-    }
+    } else if (newItem.itemCost == 0 || isNaN(newItem.itemCost) || newItem.itemCost < 0) {
+      alert("Please enter valid cost");
+      return;
+    } 
 
     if(!item) {
     list.push(newItem);
@@ -145,19 +148,19 @@ function addNewGl(item = null) {
     
     const glNumberCell = document.createElement("th");
       glNumberCell.innerText = `GL Number: ${gl.glNumber}`;
-      glNumberCell.style.cssText = "flex-grow: 1;";
+      glNumberCell.style.cssText = "";
 
     const glSubtotalCell = document.createElement("th");
       glSubtotalCell.innerText = `GL Subtotal: ${gl.glTotal}`;
-      glSubtotalCell.style.cssText = "flex-grow: 1;";
+      glSubtotalCell.style.cssText = "";
 
     const glTotalCell = document.createElement("th");
       glTotalCell.innerText = `GL Total: ${gl.glAfterTax}`;
-      glTotalCell.style.cssText = "flex-grow: 1;";
+      glTotalCell.style.cssText = "";
 
     const glTaxCell = document.createElement("th");
       glTaxCell.innerText = `GL Tax: ${gl.glTax}`;
-      glTaxCell.style.cssText = "flex-grow: 1;";
+      glTaxCell.style.cssText = "";
 
     const glDivider = document.createElement("div");
       glDivider.setAttribute("data-glNumber", `${gl.glNumber}`);
@@ -165,19 +168,20 @@ function addNewGl(item = null) {
 
     const itemBox = document.createElement("div");
       itemBox.setAttribute("data-glItemBox", `${gl.glNumber}`)
-      itemBox.style.cssText = "display: flex; flex-direction: column; max-width: 100%; height: 225px; background-color: white; padding: 10px; border: outset; boder-color: #5ebfff; overflow: auto; "
+      itemBox.classList.add('itemBox')
+      itemBox.style.cssText = ""
 
     const bookmarkBox = document.querySelector("#marksExtra");
 
     if(!bookmarkBox.querySelector(`.glMark${gl.glNumber}`)){
 
     const glBookmark = document.createElement("li");
-      glBookmark.innerHTML = `<a><strong>GL Number:</strong> ${(gl.glNumber)} - <strong>GL Total:</strong> ${gl.glAfterTax}</a>`;
+      glBookmark.innerHTML = `<a>GL Number: <strong>${(gl.glNumber)}</strong> - GL Total: <strong>${gl.glAfterTax}</strong></a>`;
       glBookmark.classList.add(`glMark${gl.glNumber}`);
       glBookmark.setAttribute("tabindex", "-1");
       glBookmark.setAttribute("id", "linkSelector")
       glBookmark.setAttribute("href", `#glMark${gl.glNumber}`)
-      glBookmark.style.cssText = "background-color: #f4f4f4; padding: 5px; max-height: 40px; margin: 0px 5px 3px 5px; min-width: 90%; text-decoration: none; color: inherit;";
+      glBookmark.style.cssText = "";
 
       bookmarkBox.appendChild(glBookmark);
 
@@ -196,7 +200,7 @@ function addNewGl(item = null) {
 
     } else if (bookmarkBox.querySelector(`.glMark${gl.glNumber}`)) {
       updateBookmark = document.querySelector(`.glMark${gl.glNumber}`)
-      updateBookmark.innerHTML = `<a><strong>GL Number:</strong> ${(gl.glNumber)} - <strong>GL Total:</strong> ${gl.glAfterTax}</a>`;
+      updateBookmark.innerHTML = `<a>GL Number: <strong>${(gl.glNumber)}</strong> - GL Total: <strong>${gl.glAfterTax}</strong></a>`;
     }
 
     glRow.appendChild(glNumberCell);
@@ -222,22 +226,23 @@ function addNewGl(item = null) {
 
       const listItemGL = document.createElement("td");
         listItemGL.innerText = `Item GL: ${item.itemGL}`;
-        listItemGL.style.cssText = "flex-grow: 4;";
+        listItemGL.style.cssText = "";
 
       const listItemName = document.createElement("td");
         listItemName.innerText = `Item Name: ${item.itemName}`;
-        listItemName.style.cssText = "flex-grow: 4;";
+        listItemName.style.cssText = "";
 
       const listItemCost = document.createElement("td");
         listItemCost.innerText = `Item Cost: ${item.itemCost}`;
-        listItemCost.style.cssText = "flex-grow: 4;";
+        listItemCost.style.cssText = ";";
 
       const listItemId = document.createElement("td");
         listItemId.innerText = `Item ID: ${item.itemId}`;
-        listItemId.style.cssText = "flex-grow: 4;";
+        listItemId.style.cssText = "";
 
       const listItemX = document.createElement("td");
         listItemX.style.cssText = "flex-grow: -1;";
+        listItemX.classList.add(`xBtnContainer`);
 
       const xBtn = document.createElement("button");
         xBtn.id = `xBtn-${item.btnId}}`
@@ -319,6 +324,67 @@ document.addEventListener("keydown", function(event) {
     addNewGl();
   }
 }) 
+
+const searchValue = document.getElementById('inputSearch');
+console.log(searchValue)
+
+function searchList() {
+
+  const results = document.querySelector('.resultsContainer');
+        results.innerText = "";
+
+  list.forEach(item => {
+
+    if (item.itemCost !== Number(searchValue.value).toFixed(2)) {
+
+      const results = document.querySelector('.resultsContainer');
+        results.innerText = "No matches";
+
+    } else if (searchValue.value == "") {
+
+      const results = document.querySelector('.resultsContainer');
+        results.innerText = "Search Results";
+
+    } else if (item.itemCost === Number(searchValue.value).toFixed(2)) {
+        
+      const glRow = document.createElement("tr");
+      glRow.setAttribute("id", `gl-row${item.itemGL}`);
+      glRow.style.cssText = "display: flex; font-size: 20px; width: 1100px; color: black; border: ridge; border-width: 5px; border-radius: 5px; border-color: rgb(144, 164, 241);";
+    
+    const itemGlCell = document.createElement("th");
+    itemGlCell.innerText = `GL Number: ${item.itemGL}`;
+    itemGlCell.style.cssText = "background-color: rgb(206, 215, 250);";
+
+    const itemNameCell = document.createElement("th");
+    itemNameCell.innerText = `Item Name: ${item.itemName}`;
+    itemNameCell.style.cssText = "background-color: rgb(206, 215, 250);";
+
+    const itemCostCell = document.createElement("th");
+    itemCostCell.innerText = `Item cost: ${item.itemCost}`;
+    itemCostCell.style.cssText = "background-color: rgb(206, 215, 250);";
+
+    const itemIdCell = document.createElement("th");
+    itemIdCell.innerText = `Item Id: ${item.itemId}`;
+    itemIdCell.style.cssText = "background-color: rgb(206, 215, 250);";
+
+    glRow.appendChild(itemGlCell);
+    glRow.appendChild(itemNameCell)
+    glRow.appendChild(itemCostCell);
+    glRow.appendChild(itemIdCell);
+
+    results.appendChild(glRow);
+
+    } 
+  })
+
+}
+
+let searchBtn = document.querySelector('.searchBtn');
+      
+searchBtn.addEventListener('click', searchList);
+searchBtn.addEventListener('click', () =>
+  console.log(searchBtn, searchValue.value));
+
 
 
 
