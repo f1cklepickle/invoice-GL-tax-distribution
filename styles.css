@@ -1,6 +1,11 @@
+html, body {
+  height: 100%;
+}
+
 body {
     font-family: Arial, sans-serif;
-    margin: 10px 10px 0px 10px;
+    margin: 0px 10px 0px 10px;
+    overflow-y: hidden;
   }
 
   #detailsContainer {
@@ -241,7 +246,7 @@ body {
       display: flex;
       background-color: #579fda;
       padding: 5px;
-      margin: -10px -10px 3px -10px;
+      margin: 0px -10px 3px -10px;
       gap: 15px;
      }
 
@@ -254,7 +259,7 @@ body {
      .footer {
       display: flex;
       background-color: #363636;
-      margin: 10px -10px 0px -10px;
+      margin: 0px -10px 0px -10px;
       padding: 8.5px;
       justify-content: space-between;
       color: #504e4e;
@@ -264,6 +269,14 @@ body {
       color: inherit;
       text-decoration: none;
     }
+
+    .masterContainer {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+    
 
    
 

@@ -8,82 +8,86 @@
   </head>
  
   <body>
-    <div class="toolbarContainer">
-      <span class="profile">Profile</span>
-      <span class="settings">Settings</span>
-      <span class="shortcuts">Shortcuts</span>
-    </div>
+    <div class="masterContainer">
+      <div class="mainContentContainer">
+        <div class="toolbarContainer">
+          <span class="profile">Profile</span>
+          <span class="settings">Settings</span>
+          <span class="shortcuts">Shortcuts</span>
+        </div>
 
-  <div class="invoiceSearchContainer">
-    <div class="invoiceDetailsContainer">
-    <div>
+        <div class="invoiceSearchContainer">
+          <div class="invoiceDetailsContainer">
 
-        <p>
-          <div class="totalContainer">
-            <strong>Invoice Total:</strong>
             <div>
-              <input type="text" id="inputTotal">
+              <p>
+              <div class="totalContainer">
+                <strong>Invoice Total:</strong>
+                <div>
+                  <input type="text" id="inputTotal">
+                </div>
+                <span id="invoice-total"></span>
+              </div>
+          </p>
+        </div>
+
+          <p><strong>Subtotal:</strong><span id="subtotal"></span></p>
+          <p><strong>Tax:</strong><span id="tax"></span></p>
+        </div>
+
+          <div class="searchBoxContainer">
+            <div class="searchContainer">
+              <button class="searchBtn" tabindex="-1">Search:</button>
+              <input type="text" id="inputSearch" tabindex="-1">
             </div>
-            <span id="invoice-total"></span>
+            <div class="resultsContainer">Search Results</div>
           </div>
-        </p>
-    </div>
+        </div>
 
-        <p><strong>Subtotal:</strong><span id="subtotal"></span></p>
-        <p><strong>Tax:</strong><span id="tax"></span></p>
-    </div>
-
-    <div class="searchBoxContainer">
-      <div class="searchContainer">
-        <button class="searchBtn" tabindex="-1">Search:</button>
-        <input type="text" id="inputSearch" tabindex="-1">
-      </div>
-      <div class="resultsContainer">Search Results</div>
-    </div>
-  </div>
-
-    <div class="enterItemContainer">
-      <table>
-        <thead>
-          <tr>
-            <th>Enter GL Number:<div>
-              <input type="text" id="inputGl">
-            </div></th>
-            <th>Enter Item Cost:<div>
-              <input type="text" id="inputCost">
-            </div></th>
-            <th>Enter Item Name: (Optional)<div>
-              <input type="text" id="inputName">
-            </div></th>
-          </tr>
-        </thead>
-      </table>
-    </div>
-  <div class="detailsBorder">
-    <div class="detailsAccent">GL Details</div>
-    <div id="detailsContentContainer">
-      <div id="bookmarkList">
-        <ul id="marksExtra">
-        </ul>
-      </div>
-      <div id="detailsContainer">
-        <table id="gl-table">
-          <thead>
-            <tr>
-           
-            </tr>
-          </thead>
-        </table>
-      </div>
-    </div>
+          <div class="enterItemContainer">
+            <table>
+              <thead>
+                <tr>
+                  <th>Enter GL Number:<div>
+                    <input type="text" id="inputGl">
+                  </div></th>
+                  <th>Enter Item Cost:<div>
+                    <input type="text" id="inputCost">
+                  </div></th>
+                  <th>Enter Item Name: (Optional)<div>
+                    <input type="text" id="inputName">
+                  </div></th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+        <div class="detailsBorder">
+          <div class="detailsAccent">GL Details</div>
+          <div id="detailsContentContainer">
+            <div id="bookmarkList">
+              <ul id="marksExtra">
+              </ul>
+            </div>
+            <div id="detailsContainer">
+              <table id="gl-table">
+                <thead>
+                  <tr>
+               
+                  </tr>
+                </thead>
+              </table>
+            </div>
+          </div>
     
 
-    <button id="add-item-button" onclick="addNewGl()"> Add New Item</button>
-  </div>
-
-    <div class="footer">
-      <span>Created - 2025</span>
-      <span>Source code & Github profile: <a href="https://github.com/f1cklepickle" rel="noopener noreferer" target="_blank">Harrison Bruhl</a></span>
+          <button id="add-item-button" onclick="addNewGl()"> Add New Item</button>
+        </div>
+      </div>
+      
+        <div class="footer">
+          <span>Created - 2025</span>
+          <span>Source code & Github profile: <a href="https://github.com/f1cklepickle" rel="noopener noreferer" target="_blank">Harrison Bruhl</a></span>
+        </div>
     </div>
 
     <script src=script.js></script>

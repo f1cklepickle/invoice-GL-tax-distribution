@@ -228,13 +228,13 @@ function addNewGl(item = null) {
         listItemGL.innerText = `Item GL: ${item.itemGL}`;
         listItemGL.style.cssText = "";
 
-      const listItemName = document.createElement("td");
-        listItemName.innerText = `Item Name: ${item.itemName}`;
-        listItemName.style.cssText = "";
-
       const listItemCost = document.createElement("td");
         listItemCost.innerText = `Item Cost: ${item.itemCost}`;
         listItemCost.style.cssText = ";";
+
+      const listItemName = document.createElement("td");
+        listItemName.innerText = `Item Name: ${item.itemName}`;
+        listItemName.style.cssText = "";
 
       const listItemId = document.createElement("td");
         listItemId.innerText = `Item ID: ${item.itemId}`;
@@ -253,8 +253,8 @@ function addNewGl(item = null) {
 
     listItemX.appendChild(xBtn);
     listItem.appendChild(listItemGL);
-    listItem.appendChild(listItemName);
     listItem.appendChild(listItemCost);
+    listItem.appendChild(listItemName);
     listItem.appendChild(listItemId);
     listItem.appendChild(listItemX);
     
@@ -368,7 +368,7 @@ function searchList() {
     itemIdCell.style.cssText = "background-color: rgb(206, 215, 250);";
 
     glRow.appendChild(itemGlCell);
-    glRow.appendChild(itemNameCell)
+    glRow.appendChild(itemNameCell);
     glRow.appendChild(itemCostCell);
     glRow.appendChild(itemIdCell);
 
