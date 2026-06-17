@@ -53,6 +53,10 @@ const searchValue = document.getElementById("inputSearch");
 const searchBtn = document.querySelector(".searchBtn");
 const loadDemoButton = document.getElementById("load-demo-button");
 const resetInvoiceButton = document.getElementById("reset-invoice-button");
+const toolbarMenuButtons = document.querySelectorAll(".toolbarMenuButton");
+const toolbarDropdown = document.getElementById("toolbar-dropdown");
+const menuBackdrop = document.getElementById("menu-backdrop");
+const toolbarPanels = document.querySelectorAll(".toolbarPanel");
 
 targetInput.forEach((input) => {
   input.addEventListener("focus", function () {
@@ -65,6 +69,37 @@ targetInput.forEach((input) => {
 });
 
 focusTotal.focus();
+
+function isToolbarMenuOpen() {
+  return !toolbarDropdown.hidden;
+}
+
+function openToolbarMenu(panelName) {
+  toolbarDropdown.hidden = false;
+  menuBackdrop.hidden = false;
+
+  toolbarMenuButtons.forEach((button) => {
+    const isActive = button.dataset.menuTarget === panelName;
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+
+  toolbarPanels.forEach((panel) => {
+    panel.classList.toggle("isActive", panel.dataset.panel === panelName);
+  });
+}
+
+function closeToolbarMenu() {
+  toolbarDropdown.hidden = true;
+  menuBackdrop.hidden = true;
+
+  toolbarMenuButtons.forEach((button) => {
+    button.setAttribute("aria-pressed", "false");
+  });
+
+  toolbarPanels.forEach((panel) => {
+    panel.classList.remove("isActive");
+  });
+}
 
 function createInvoiceItem({ itemGL, itemType, itemName, itemCost }) {
   const nextItemId = itemIdNum;
@@ -349,12 +384,23 @@ function searchList() {
 }
 
 document.addEventListener("keydown", function (event) {
-  if (event.key === "Enter" && event.target.tagName !== "BUTTON") {
+  if (event.key === "Enter" && !isToolbarMenuOpen() && event.target.tagName !== "BUTTON") {
     event.preventDefault();
     addNewGl();
   }
 });
 
+toolbarMenuButtons.forEach((button) => {
+  button.addEventListener("click", function () {
+    openToolbarMenu(button.dataset.menuTarget);
+  });
+});
+
+toolbarDropdown.addEventListener("click", function (event) {
+  event.stopPropagation();
+});
+
+menuBackdrop.addEventListener("click", closeToolbarMenu);
 searchBtn.addEventListener("click", searchList);
 loadDemoButton.addEventListener("click", loadDemoInvoice);
 resetInvoiceButton.addEventListener("click", resetInvoice);

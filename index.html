@@ -11,10 +11,28 @@
     <div class="masterContainer">
       <div class="mainContentContainer">
         <header class="toolbarContainer" aria-label="Application tools">
-          <span class="profile">Profile</span>
-          <span class="settings">Settings</span>
-          <span class="shortcuts">Shortcuts</span>
+          <button class="toolbarMenuButton profile" type="button" data-menu-target="profile" aria-pressed="false" aria-controls="toolbar-dropdown">Profile</button>
+          <button class="toolbarMenuButton settings" type="button" data-menu-target="settings" aria-pressed="false" aria-controls="toolbar-dropdown">Settings</button>
+          <button class="toolbarMenuButton shortcuts" type="button" data-menu-target="shortcuts" aria-pressed="false" aria-controls="toolbar-dropdown">Shortcuts</button>
         </header>
+
+        <div id="menu-backdrop" class="menuBackdrop" hidden></div>
+        <aside id="toolbar-dropdown" class="toolbarDropdown" aria-live="polite" hidden>
+          <section class="toolbarPanel" data-panel="profile">
+            <h2>Profile</h2>
+            <p>Local demo profile options will appear here.</p>
+          </section>
+
+          <section class="toolbarPanel" data-panel="settings">
+            <h2>Settings</h2>
+            <p>Invoice display and behavior settings will appear here.</p>
+          </section>
+
+          <section class="toolbarPanel" data-panel="shortcuts">
+            <h2>Shortcuts</h2>
+            <p>GL shortcut mappings will appear here.</p>
+          </section>
+        </aside>
 
         <main>
           <section class="invoiceSearchContainer" aria-label="Invoice summary and search">
