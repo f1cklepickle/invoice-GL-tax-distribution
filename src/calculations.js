@@ -51,6 +51,34 @@
     return toCents(invoiceTotal) - subtotalCents;
   }
 
+  function isRefundItem(item) {
+    return item.itemType === "refund";
+  }
+
+  function getTaxAllocationSubtotals(items) {
+    const purchaseGroups = items.reduce((groups, item) => {
+      const itemCostCents = toCents(item.itemCost);
+
+      if (isRefundItem(item) || itemCostCents <= 0) {
+        return groups;
+      }
+
+      const glNumber = String(item.itemGL).trim();
+
+      if (!groups[glNumber]) {
+        groups[glNumber] = {
+          glNumber,
+          subtotalCents: 0,
+        };
+      }
+
+      groups[glNumber].subtotalCents += itemCostCents;
+      return groups;
+    }, {});
+
+    return Object.values(purchaseGroups);
+  }
+
   function distributeRemainder(distributions, remainingCents) {
     return distributions
       .map((distribution, index) => ({ ...distribution, index }))
@@ -68,9 +96,12 @@
     const taxCents = getTaxCents(invoiceTotal, subtotalCents);
     const adjustmentSign = taxCents < 0 ? -1 : 1;
     const absoluteTaxCents = Math.abs(taxCents);
+    const glSubtotals = getGlSubtotals(items);
+    const taxAllocationSubtotals = getTaxAllocationSubtotals(items);
+    const taxAllocationBaseCents = taxAllocationSubtotals.reduce((sum, group) => sum + group.subtotalCents, 0);
 
-    if (subtotalCents <= 0 || absoluteTaxCents === 0) {
-      return getGlSubtotals(items).map((group) => ({
+    if (subtotalCents <= 0 || absoluteTaxCents === 0 || taxAllocationBaseCents <= 0) {
+      return glSubtotals.map((group) => ({
         glNumber: group.glNumber,
         glSubtotalCents: group.subtotalCents,
         glTaxCents: 0,
@@ -82,8 +113,8 @@
       }));
     }
 
-    const initialDistributions = getGlSubtotals(items).map((group) => {
-      const exactTax = (group.subtotalCents * absoluteTaxCents) / subtotalCents;
+    const initialDistributions = taxAllocationSubtotals.map((group) => {
+      const exactTax = (group.subtotalCents * absoluteTaxCents) / taxAllocationBaseCents;
       const baseAdjustmentCents = Math.floor(exactTax);
 
       return {
@@ -96,18 +127,23 @@
 
     const assignedTaxCents = initialDistributions.reduce((sum, group) => sum + group.adjustmentCents, 0);
     const balancedDistributions = distributeRemainder(initialDistributions, absoluteTaxCents - assignedTaxCents);
+    const taxByGl = balancedDistributions.reduce((taxMap, group) => {
+      taxMap[group.glNumber] = group.adjustmentCents * adjustmentSign;
+      return taxMap;
+    }, {});
 
-    return balancedDistributions.map((group) => {
-      const glTaxCents = group.adjustmentCents * adjustmentSign;
-      const glAfterTaxCents = group.glSubtotalCents + glTaxCents;
+    return glSubtotals.map((group) => {
+      const purchaseSubtotal = taxAllocationSubtotals.find((purchaseGroup) => purchaseGroup.glNumber === group.glNumber);
+      const glTaxCents = taxByGl[group.glNumber] || 0;
+      const glAfterTaxCents = group.subtotalCents + glTaxCents;
 
       return {
         glNumber: group.glNumber,
-        glSubtotalCents: group.glSubtotalCents,
+        glSubtotalCents: group.subtotalCents,
         glTaxCents,
         glAfterTaxCents,
-        glPercentage: ((group.glSubtotalCents / subtotalCents) * 100).toFixed(2),
-        glTotal: formatCents(group.glSubtotalCents),
+        glPercentage: purchaseSubtotal ? ((purchaseSubtotal.subtotalCents / taxAllocationBaseCents) * 100).toFixed(2) : "0.00",
+        glTotal: formatCents(group.subtotalCents),
         glTax: formatCents(glTaxCents),
         glAfterTax: formatCents(glAfterTaxCents),
       };
@@ -126,11 +162,13 @@
     return Number.isFinite(cents) && cents > 0;
   }
 
-  function validateInvoiceEntry({ invoiceTotal, itemGL, itemCost, existingItems = [] }) {
+  function validateInvoiceEntry({ invoiceTotal, itemGL, itemCost, itemType = "purchase", existingItems = [] }) {
     const invoiceTotalValue = String(invoiceTotal || "").trim();
     const glNumber = String(itemGL || "").trim();
     const itemCostValue = String(itemCost || "").trim();
     const itemCostCents = toCents(itemCost);
+    const normalizedItemType = itemType === "refund" ? "refund" : "purchase";
+    const normalizedItemCostCents = normalizedItemType === "refund" ? -Math.abs(itemCostCents) : itemCostCents;
     const invoiceTotalCents = toCents(invoiceTotal);
 
     if (!invoiceTotalValue) {
@@ -153,7 +191,7 @@
       return { isValid: false, message: "Please enter valid cost" };
     }
 
-    const nextSubtotalCents = getSubtotalCents(existingItems) + itemCostCents;
+    const nextSubtotalCents = getSubtotalCents(existingItems) + normalizedItemCostCents;
 
     if (nextSubtotalCents - invoiceTotalCents > SMALL_TOTAL_DIFFERENCE_LIMIT_CENTS) {
       return { isValid: false, message: "Invoice total should be greater than item subtotal" };
@@ -162,8 +200,9 @@
     return {
       isValid: true,
       glNumber,
-      itemCost: formatCents(itemCostCents),
-      itemCostCents,
+      itemCost: formatCents(normalizedItemCostCents),
+      itemCostCents: normalizedItemCostCents,
+      itemType: normalizedItemType,
       invoiceTotalCents,
       nextSubtotalCents,
     };
@@ -175,6 +214,7 @@
     getGlSubtotals,
     getSubtotalCents,
     getSmallDifferenceNotice,
+    getTaxAllocationSubtotals,
     getTaxCents,
     groupItemsByGl,
     toCents,
