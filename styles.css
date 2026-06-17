@@ -2,17 +2,23 @@ html, body {
   height: 100%;
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 body {
   font-family: Arial, sans-serif;
   margin: 0 10px;
   background-color: #ffffff;
   color: #1f1f1f;
+  line-height: 1.4;
+  overflow: hidden;
 }
 
 #detailsContainer {
   border-radius: 5px;
   max-width: 80%;
-  height: 530px;
+  min-height: 0;
   border: ridge 5px rgb(152, 181, 197);
   background-color: rgb(212, 212, 212);
   overflow: auto;
@@ -53,6 +59,8 @@ input {
   background-color: #f4f4f4;
   color: black;
   padding: 4px 6px;
+  min-height: 28px;
+  box-sizing: border-box;
 }
 
 a {
@@ -64,37 +72,49 @@ a {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 100%;
+  height: 100vh;
+  min-height: 0;
 }
 
 .mainContentContainer {
+  display: flex;
+  flex-direction: column;
   flex-grow: 1;
+  min-height: 0;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 0;
 }
 
 .toolbarContainer {
   display: flex;
   background-color: #579fda;
-  padding: 5px;
+  padding: 6px 10px;
   margin: 0 -10px 3px -10px;
-  gap: 15px;
+  gap: 18px;
 }
 
 .profile, .settings, .shortcuts {
   border-radius: 3.5px;
   border-bottom: ridge;
   border-color: #647dee;
+  padding: 2px 4px;
 }
 
 .invoiceSearchContainer {
   display: flex;
   flex-direction: row;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .invoiceDetailsContainer {
   background-color: #d6d6d6;
-  min-height: 120px;
+  min-height: 116px;
   width: 35%;
   padding: 8px;
   border: ridge;
@@ -104,7 +124,7 @@ a {
 
 .searchBoxContainer {
   background-color: #d6d6d6;
-  min-height: 120px;
+  min-height: 116px;
   width: 65%;
   padding: 8px;
   border: ridge;
@@ -117,15 +137,15 @@ a {
   flex-direction: row;
   align-items: center;
   gap: 6px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .enterItemContainer {
   display: flex;
   flex-direction: row;
   gap: 12px;
-  margin: 8px 0;
-  padding: 8px;
+  margin: 10px 0;
+  padding: 10px;
   background-color: #f4f4f4;
   border: ridge;
   border-radius: 5px;
@@ -144,6 +164,10 @@ a {
 
 #inputTotal, #inputGl, #inputCost, #inputName {
   margin-left: 2px;
+}
+
+#inputTotal {
+  max-width: 160px;
 }
 
 #inputSearch {
@@ -166,7 +190,9 @@ a {
   border-color: #ffffff;
   background-color: rgb(152, 181, 197);
   color: #303030;
-  padding: 5px 10px;
+  min-height: 32px;
+  padding: 5px 12px;
+  cursor: pointer;
 }
 
 .resultsContainer {
@@ -181,35 +207,42 @@ a {
   background-color: #aaa9a9;
   border: inset 4px rgb(152, 181, 197);
   border-radius: 5px;
-  font-size: 30px;
-  color: rgba(194, 205, 211, 0.836);
+  font-size: 24px;
+  color: rgba(236, 242, 245, 0.9);
   height: 55px;
   max-height: 55px;
 }
 
 .detailsBorder {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 0;
   border-radius: 5px;
   background-color: #f1f1f1;
   border: outset;
   border-color: #2b2b2b;
-  padding: 2px 20px;
+  padding: 8px 20px 10px 20px;
 }
 
 .detailsAccent {
   font-weight: 600;
   font-size: 28px;
   text-align: center;
+  margin-bottom: 6px;
 }
 
 #detailsContentContainer {
   display: flex;
   flex-direction: row;
+  flex-grow: 1;
+  min-height: 0;
 }
 
 #bookmarkList {
   border-radius: 5px;
   display: flex;
-  height: 530px;
+  min-height: 0;
   max-width: 20%;
   background-color: rgb(212, 212, 212);
   flex-grow: 1;
@@ -219,7 +252,8 @@ a {
 
 #marksExtra {
   list-style: none;
-  padding: 0;
+  padding: 6px 0;
+  margin: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -234,22 +268,24 @@ a {
   border-color: #579fda;
   background-color: #f4f4f4;
   padding: 5px;
-  max-height: 40px;
+  max-height: none;
   margin: 0 5px 3px 5px;
   min-width: 90%;
   color: inherit;
+  box-sizing: border-box;
 }
 
 #linkSelector:hover {
-  padding: 10px 0;
   background-color: #579fda;
+  color: #ffffff;
 }
 
 .itemBox {
   display: flex;
   flex-direction: column;
   max-width: 100%;
-  height: 225px;
+  min-height: 120px;
+  max-height: 225px;
   background-color: white;
   padding: 10px;
   border-radius: 5px;
@@ -268,13 +304,14 @@ a {
   border-color: #ffffff;
   background-color: #c23a22;
   color: #ffffff;
+  min-width: 28px;
+  min-height: 28px;
+  cursor: pointer;
 }
 
 .delBtn:hover {
-  border-radius: 0;
-  border-width: 5px;
   border-color: #5a160a;
-  color: #5a160a;
+  background-color: #a52f1b;
 }
 
 .input-focus {
@@ -286,25 +323,25 @@ a {
   background-color: rgb(152, 181, 197);
   border: ridge;
   border-radius: 5px;
-  padding: 5px 10px;
+  min-height: 34px;
+  padding: 6px 12px;
+  cursor: pointer;
 }
 
 #add-item-button:hover {
-  border-radius: 30px;
   color: rgb(227, 255, 227);
   border-color: rgb(62, 211, 107);
-  border-width: 5px;
-  font-size: 16.5px;
-  margin: 4px;
+  background-color: rgb(113, 153, 170);
 }
 
 .footer {
   display: flex;
   background-color: #363636;
   margin: 0 -10px;
-  padding: 8.5px;
+  padding: 8px 10px;
   justify-content: space-between;
   color: #b8b8b8;
+  gap: 12px;
 }
 
 @media (max-width: 800px) {
@@ -329,6 +366,8 @@ a {
   }
 
   #detailsContainer {
+    height: auto;
+    min-height: 320px;
     margin-left: 0;
   }
 
