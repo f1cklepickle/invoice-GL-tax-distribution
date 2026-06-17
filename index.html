@@ -1,95 +1,84 @@
 <!DOCTYPE html>
-<html lang ="en">
+<html lang="en">
   <head>
     <meta charset="UTF-8">
-    <meta="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice Tax Distribution Program</title>
     <link rel="stylesheet" href="styles.css">
   </head>
- 
+
   <body>
     <div class="masterContainer">
       <div class="mainContentContainer">
-        <div class="toolbarContainer">
+        <header class="toolbarContainer" aria-label="Application tools">
           <span class="profile">Profile</span>
           <span class="settings">Settings</span>
           <span class="shortcuts">Shortcuts</span>
-        </div>
+        </header>
 
-        <div class="invoiceSearchContainer">
-          <div class="invoiceDetailsContainer">
-
-            <div>
-              <p>
+        <main>
+          <section class="invoiceSearchContainer" aria-label="Invoice summary and search">
+            <div class="invoiceDetailsContainer">
               <div class="totalContainer">
-                <strong>Invoice Total:</strong>
-                <div>
-                  <input type="text" id="inputTotal">
-                </div>
+                <label for="inputTotal">Invoice Total:</label>
+                <input type="text" id="inputTotal">
                 <span id="invoice-total"></span>
               </div>
-          </p>
-        </div>
 
-          <p><strong>Subtotal:</strong><span id="subtotal"></span></p>
-          <p><strong>Tax:</strong><span id="tax"></span></p>
-        </div>
-
-          <div class="searchBoxContainer">
-            <div class="searchContainer">
-              <button class="searchBtn" tabindex="-1">Search:</button>
-              <input type="text" id="inputSearch" tabindex="-1">
+              <p><strong>Subtotal:</strong> <span id="subtotal"></span></p>
+              <p><strong>Tax:</strong> <span id="tax"></span></p>
             </div>
-            <div class="resultsContainer">Search Results</div>
-          </div>
-        </div>
 
-          <div class="enterItemContainer">
-            <table>
-              <thead>
-                <tr>
-                  <th>Enter GL Number:<div>
-                    <input type="text" id="inputGl">
-                  </div></th>
-                  <th>Enter Item Cost:<div>
-                    <input type="text" id="inputCost">
-                  </div></th>
-                  <th>Enter Item Name: (Optional)<div>
-                    <input type="text" id="inputName">
-                  </div></th>
-                </tr>
-              </thead>
-            </table>
-          </div>
-        <div class="detailsBorder">
-          <div class="detailsAccent">GL Details</div>
-          <div id="detailsContentContainer">
-            <div id="bookmarkList">
-              <ul id="marksExtra">
-              </ul>
+            <div class="searchBoxContainer">
+              <div class="searchContainer">
+                <label for="inputSearch">Search item cost:</label>
+                <input type="text" id="inputSearch">
+                <button class="searchBtn" type="button">Search</button>
+              </div>
+              <div class="resultsContainer" aria-live="polite">Search Results</div>
             </div>
-            <div id="detailsContainer">
-              <table id="gl-table">
-                <thead>
-                  <tr>
-               
-                  </tr>
-                </thead>
-              </table>
-            </div>
-          </div>
-    
+          </section>
 
-          <button id="add-item-button" onclick="addNewGl()"> Add New Item</button>
-        </div>
+          <section class="enterItemContainer" aria-label="Add invoice line item">
+            <div class="entryField">
+              <label for="inputGl">Enter GL Number:</label>
+              <input type="text" id="inputGl">
+            </div>
+
+            <div class="entryField">
+              <label for="inputCost">Enter Item Cost:</label>
+              <input type="text" id="inputCost">
+            </div>
+
+            <div class="entryField">
+              <label for="inputName">Enter Item Name: <span>(Optional)</span></label>
+              <input type="text" id="inputName">
+            </div>
+          </section>
+
+          <section class="detailsBorder" aria-label="GL details">
+            <div class="detailsAccent">GL Details</div>
+            <div id="detailsContentContainer">
+              <aside id="bookmarkList" aria-label="GL bookmarks">
+                <ul id="marksExtra"></ul>
+              </aside>
+
+              <div id="detailsContainer">
+                <table id="gl-table"></table>
+              </div>
+            </div>
+
+            <button id="add-item-button" type="button" onclick="addNewGl()">Add New Item</button>
+          </section>
+        </main>
       </div>
-      
-        <div class="footer">
-          <span>Created - 2025</span>
-          <span>Source code & Github profile: <a href="https://github.com/f1cklepickle" rel="noopener noreferer" target="_blank">Harrison Bruhl</a></span>
-        </div>
+
+      <footer class="footer">
+        <span>Created - 2025</span>
+        <span>Source code & Github profile: <a href="https://github.com/f1cklepickle" rel="noopener noreferrer" target="_blank">Harrison Bruhl</a></span>
+      </footer>
     </div>
 
-    <script src=script.js></script>
+    <script src="script.js"></script>
   </body>
 </html>
