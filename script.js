@@ -38,6 +38,7 @@ function addNewGl(item = null) {
     invoiceTotal: total,
     itemGL: document.getElementById("inputGl").value,
     itemCost: document.getElementById("inputCost").value,
+    itemType: document.getElementById("inputType").value,
     existingItems: list,
   });
 
@@ -48,6 +49,7 @@ function addNewGl(item = null) {
   
       const newItem = item || {
         itemGL: validation.glNumber,
+        itemType: validation.itemType,
         itemName: document.getElementById("inputName").value,
         itemCost: validation.itemCost,
         itemId: itemIdNum,
@@ -180,6 +182,10 @@ function addNewGl(item = null) {
         listItemCost.innerText = `Item Cost: ${item.itemCost}`;
         listItemCost.style.cssText = ";";
 
+      const listItemType = document.createElement("td");
+        listItemType.innerText = `Line Type: ${item.itemType === "refund" ? "Refund" : "Purchase"}`;
+        listItemType.style.cssText = "";
+
       const listItemName = document.createElement("td");
         listItemName.innerText = `Item Name: ${item.itemName}`;
         listItemName.style.cssText = "";
@@ -201,6 +207,7 @@ function addNewGl(item = null) {
 
     listItemX.appendChild(xBtn);
     listItem.appendChild(listItemGL);
+    listItem.appendChild(listItemType);
     listItem.appendChild(listItemCost);
     listItem.appendChild(listItemName);
     listItem.appendChild(listItemId);
@@ -252,6 +259,7 @@ function renderList() {
 
     const newItem = {
       itemGL: item.itemGL,
+      itemType: item.itemType,
       itemName: item.itemName,
       itemCost: item.itemCost,
       itemId: itemIdNum,

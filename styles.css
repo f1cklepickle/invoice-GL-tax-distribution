@@ -53,7 +53,7 @@ label {
   font-weight: 700;
 }
 
-input {
+input, select {
   border-radius: 5px;
   border: ridge 2px rgb(152, 181, 197);
   background-color: #f4f4f4;
@@ -162,7 +162,7 @@ main {
   font-weight: 400;
 }
 
-#inputTotal, #inputGl, #inputCost, #inputName {
+#inputTotal, #inputType, #inputGl, #inputCost, #inputName {
   margin-left: 2px;
 }
 

@@ -42,6 +42,14 @@
 
           <section class="enterItemContainer" aria-label="Add invoice line item">
             <div class="entryField">
+              <label for="inputType">Line Type:</label>
+              <select id="inputType">
+                <option value="purchase">Purchase</option>
+                <option value="refund">Refund</option>
+              </select>
+            </div>
+
+            <div class="entryField">
               <label for="inputGl">Enter GL Number:</label>
               <input type="text" id="inputGl">
             </div>
