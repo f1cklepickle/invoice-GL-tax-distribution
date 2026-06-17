@@ -111,22 +111,6 @@ function addNewGl(item = null) {
 
       };
         
-    console.log("Sorted GL:");
-    console.log(sortedGL);
-    console.log("Total Cost by GL:");
-    console.log(totalCostByGL);
-    console.log(`Subtotal: ${getSubTotal().toFixed(2)}`);
-    console.log("Invoice Total:" , total);
-    console.log(`Tax: ${getTax().toFixed(2)}`);
-    console.log(`GL after tax:`, addTax())
-    
-    document.addEventListener("DOMContentLoaded", () => {
-    
-    const addButton = document.querySelector('#add-item-button');
-      addButton.addEventListener("click", addNewGl);
-
-    },);
-   
     const subTotal = getSubTotal();
 
     document.getElementById("invoice-total").innerText = Number(total).toFixed(2);
@@ -199,7 +183,7 @@ function addNewGl(item = null) {
     });
 
     } else if (bookmarkBox.querySelector(`.glMark${gl.glNumber}`)) {
-      updateBookmark = document.querySelector(`.glMark${gl.glNumber}`)
+      const updateBookmark = document.querySelector(`.glMark${gl.glNumber}`);
       updateBookmark.innerHTML = `<a>GL Number: <strong>${(gl.glNumber)}</strong> - GL Total: <strong>${gl.glAfterTax}</strong></a>`;
     }
 
@@ -262,7 +246,6 @@ function addNewGl(item = null) {
   },);
 
   const delBtns = document.querySelectorAll('.delBtn');
-  console.log(delBtns)
     delBtns.forEach(button => {
       button.addEventListener('click', removeTarget);
       button.addEventListener('click', function (event) {
@@ -326,7 +309,6 @@ document.addEventListener("keydown", function(event) {
 }) 
 
 const searchValue = document.getElementById('inputSearch');
-console.log(searchValue)
 
 function searchList() {
 
@@ -382,8 +364,6 @@ function searchList() {
 let searchBtn = document.querySelector('.searchBtn');
       
 searchBtn.addEventListener('click', searchList);
-searchBtn.addEventListener('click', () =>
-  console.log(searchBtn, searchValue.value));
 
 
 
