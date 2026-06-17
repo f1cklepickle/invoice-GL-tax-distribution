@@ -6,6 +6,7 @@
     getTaxCents,
     groupItemsByGl,
     toCents,
+    validateInvoiceEntry,
   } = window.invoiceCalculations;
 
   const tests = [];
@@ -94,6 +95,77 @@
       { glNumber: "1000", subtotalCents: 1225, subtotal: "12.25" },
       { glNumber: "2000", subtotalCents: 550, subtotal: "5.50" },
     ], "GL subtotals should include cents and display amounts.");
+  });
+
+  test("rejects a blank GL number", () => {
+    const result = validateInvoiceEntry({
+      invoiceTotal: "25.00",
+      itemGL: " ",
+      itemCost: "10.00",
+    });
+
+    assertEqual(result.isValid, false, "Blank GL should be invalid.");
+    assertEqual(result.message, "Please enter GL number", "Blank GL should return the existing message.");
+  });
+
+  test("rejects invalid item costs", () => {
+    const invalidText = validateInvoiceEntry({
+      invoiceTotal: "25.00",
+      itemGL: "1000",
+      itemCost: "abc",
+    });
+    const zeroCost = validateInvoiceEntry({
+      invoiceTotal: "25.00",
+      itemGL: "1000",
+      itemCost: "0",
+    });
+    const negativeCost = validateInvoiceEntry({
+      invoiceTotal: "25.00",
+      itemGL: "1000",
+      itemCost: "-1.00",
+    });
+
+    assertEqual(invalidText.isValid, false, "Text cost should be invalid.");
+    assertEqual(zeroCost.isValid, false, "Zero cost should be invalid.");
+    assertEqual(negativeCost.isValid, false, "Negative cost should be invalid.");
+  });
+
+  test("rejects invalid invoice totals", () => {
+    const result = validateInvoiceEntry({
+      invoiceTotal: "",
+      itemGL: "1000",
+      itemCost: "10.00",
+    });
+
+    assertEqual(result.isValid, false, "Blank invoice total should be invalid.");
+    assertEqual(result.message, "Please enter valid invoice total", "Invalid total should return a clear message.");
+  });
+
+  test("rejects entries that would make subtotal exceed invoice total", () => {
+    const result = validateInvoiceEntry({
+      invoiceTotal: "15.00",
+      itemGL: "1000",
+      itemCost: "10.00",
+      existingItems: [
+        { itemGL: "2000", itemCost: "8.00" },
+      ],
+    });
+
+    assertEqual(result.isValid, false, "Subtotal over invoice total should be invalid.");
+    assertEqual(result.message, "Invoice total must be at least subtotal", "Over-subtotal entries should explain the issue.");
+  });
+
+  test("normalizes valid entry values", () => {
+    const result = validateInvoiceEntry({
+      invoiceTotal: "25.00",
+      itemGL: " 1000 ",
+      itemCost: "10",
+    });
+
+    assertEqual(result.isValid, true, "Valid entry should pass.");
+    assertEqual(result.glNumber, "1000", "GL number should be trimmed.");
+    assertEqual(result.itemCost, "10.00", "Item cost should be formatted.");
+    assertEqual(result.nextSubtotalCents, 1000, "Next subtotal should include the new item.");
   });
 
   const results = tests.map(({ name, callback }) => {

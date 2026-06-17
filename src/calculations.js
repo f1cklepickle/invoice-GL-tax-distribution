@@ -49,6 +49,43 @@
     return toCents(invoiceTotal) - subtotalCents;
   }
 
+  function isPositiveCents(cents) {
+    return Number.isFinite(cents) && cents > 0;
+  }
+
+  function validateInvoiceEntry({ invoiceTotal, itemGL, itemCost, existingItems = [] }) {
+    const glNumber = String(itemGL || "").trim();
+    const itemCostCents = toCents(itemCost);
+    const invoiceTotalCents = toCents(invoiceTotal);
+
+    if (!glNumber) {
+      return { isValid: false, message: "Please enter GL number" };
+    }
+
+    if (!isPositiveCents(itemCostCents)) {
+      return { isValid: false, message: "Please enter valid cost" };
+    }
+
+    if (!isPositiveCents(invoiceTotalCents)) {
+      return { isValid: false, message: "Please enter valid invoice total" };
+    }
+
+    const nextSubtotalCents = getSubtotalCents(existingItems) + itemCostCents;
+
+    if (nextSubtotalCents > invoiceTotalCents) {
+      return { isValid: false, message: "Invoice total must be at least subtotal" };
+    }
+
+    return {
+      isValid: true,
+      glNumber,
+      itemCost: formatCents(itemCostCents),
+      itemCostCents,
+      invoiceTotalCents,
+      nextSubtotalCents,
+    };
+  }
+
   const invoiceCalculations = {
     formatCents,
     getGlSubtotals,
@@ -56,6 +93,7 @@
     getTaxCents,
     groupItemsByGl,
     toCents,
+    validateInvoiceEntry,
   };
 
   global.invoiceCalculations = invoiceCalculations;

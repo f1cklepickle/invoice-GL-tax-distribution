@@ -1,6 +1,7 @@
 let list = []
 let itemIdNum = 1
 let newList = []
+const { validateInvoiceEntry } = window.invoiceCalculations;
 
 function getBtnId() {
   return list.length;
@@ -25,11 +26,22 @@ const focusTotal = document.querySelector("#inputTotal");
 function addNewGl(item = null) {
 
   const total = document.getElementById("inputTotal").value;
+  const validation = item ? null : validateInvoiceEntry({
+    invoiceTotal: total,
+    itemGL: document.getElementById("inputGl").value,
+    itemCost: document.getElementById("inputCost").value,
+    existingItems: list,
+  });
+
+  if (validation && !validation.isValid) {
+    alert(validation.message);
+    return;
+  }
   
       const newItem = item || {
-        itemGL: document.getElementById("inputGl").value || "Blank",
+        itemGL: validation.glNumber,
         itemName: document.getElementById("inputName").value,
-        itemCost: Number(document.getElementById("inputCost").value).toFixed(2) || 0,
+        itemCost: validation.itemCost,
         itemId: itemIdNum,
         btnId: getBtnId(),
         removeItem: function(event) {
@@ -45,15 +57,6 @@ function addNewGl(item = null) {
             }
           }
         }
-
-        
-    if (newItem.itemGL === "Blank") {
-      alert("Please enter GL number");
-      return;
-    } else if (newItem.itemCost == 0 || isNaN(newItem.itemCost) || newItem.itemCost < 0) {
-      alert("Please enter valid cost");
-      return;
-    } 
 
     if(!item) {
     list.push(newItem);
