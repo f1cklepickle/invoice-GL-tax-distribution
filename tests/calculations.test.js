@@ -4,6 +4,7 @@
     formatCents,
     getGlSubtotals,
     getSubtotalCents,
+    getSmallDifferenceNotice,
     getTaxCents,
     groupItemsByGl,
     toCents,
@@ -109,6 +110,17 @@
     assertEqual(result.message, "Please enter GL number", "Blank GL should return the existing message.");
   });
 
+  test("asks for invoice total before GL number or item cost", () => {
+    const result = validateInvoiceEntry({
+      invoiceTotal: "",
+      itemGL: "",
+      itemCost: "",
+    });
+
+    assertEqual(result.isValid, false, "Blank entry should be invalid.");
+    assertEqual(result.message, "Please enter invoice total", "Blank entry should ask for invoice total first.");
+  });
+
   test("rejects invalid item costs", () => {
     const invalidText = validateInvoiceEntry({
       invoiceTotal: "25.00",
@@ -133,13 +145,24 @@
 
   test("rejects invalid invoice totals", () => {
     const result = validateInvoiceEntry({
-      invoiceTotal: "",
+      invoiceTotal: "abc",
       itemGL: "1000",
       itemCost: "10.00",
     });
 
-    assertEqual(result.isValid, false, "Blank invoice total should be invalid.");
+    assertEqual(result.isValid, false, "Invalid invoice total should be invalid.");
     assertEqual(result.message, "Please enter valid invoice total", "Invalid total should return a clear message.");
+  });
+
+  test("asks for item cost after invoice total and GL number are entered", () => {
+    const result = validateInvoiceEntry({
+      invoiceTotal: "25.00",
+      itemGL: "1000",
+      itemCost: "",
+    });
+
+    assertEqual(result.isValid, false, "Blank item cost should be invalid.");
+    assertEqual(result.message, "Please enter item cost", "Blank item cost should be requested after total and GL.");
   });
 
   test("rejects entries that would make subtotal exceed invoice total", () => {
@@ -153,7 +176,21 @@
     });
 
     assertEqual(result.isValid, false, "Subtotal over invoice total should be invalid.");
-    assertEqual(result.message, "Invoice total must be at least subtotal", "Over-subtotal entries should explain the issue.");
+    assertEqual(result.message, "Invoice total should be greater than item subtotal", "Over-subtotal entries should explain the issue.");
+  });
+
+  test("allows small invoice total differences up to ten cents", () => {
+    const result = validateInvoiceEntry({
+      invoiceTotal: "19.97",
+      itemGL: "1000",
+      itemCost: "10.00",
+      existingItems: [
+        { itemGL: "2000", itemCost: "10.00" },
+      ],
+    });
+
+    assertEqual(result.isValid, true, "Small subtotal overage should be accepted.");
+    assertEqual(result.nextSubtotalCents, 2000, "Next subtotal should retain the item subtotal.");
   });
 
   test("normalizes valid entry values", () => {
@@ -201,6 +238,30 @@
 
     assertEqual(glTotalCents, 3001, "Distributed GL totals should tie to invoice total cents.");
     assertDeepEqual(distribution.map((gl) => gl.glTax), ["0.01", "0.00", "0.00"], "Rounding remainder should be assigned once.");
+  });
+
+  test("distributes small negative total differences across GL totals", () => {
+    const distribution = distributeTaxByGl({
+      invoiceTotal: "29.97",
+      items: [
+        { itemGL: "1000", itemCost: "10.00" },
+        { itemGL: "2000", itemCost: "10.00" },
+        { itemGL: "3000", itemCost: "10.00" },
+      ],
+    });
+    const glTotalCents = distribution.reduce((sum, gl) => sum + gl.glAfterTaxCents, 0);
+
+    assertEqual(glTotalCents, 2997, "Distributed GL totals should tie to a lower invoice total.");
+    assertDeepEqual(distribution.map((gl) => gl.glTax), ["-0.01", "-0.01", "-0.01"], "Small negative difference should reduce GL totals.");
+  });
+
+  test("notes small invoice total differences", () => {
+    assertEqual(
+      getSmallDifferenceNotice(-3),
+      "Small invoice total difference of 0.03 was distributed across GL totals.",
+      "Small negative differences should be noted."
+    );
+    assertEqual(getSmallDifferenceNotice(11), "", "Larger differences should not use the small-difference note.");
   });
 
   const results = tests.map(({ name, callback }) => {

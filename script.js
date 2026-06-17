@@ -5,6 +5,7 @@ const {
   distributeTaxByGl,
   formatCents,
   getSubtotalCents,
+  getSmallDifferenceNotice,
   getTaxCents,
   toCents,
   validateInvoiceEntry,
@@ -75,6 +76,7 @@ function addNewGl(item = null) {
     document.getElementById("invoice-total").innerText = formatCents(toCents(total));
     document.getElementById("subtotal").innerText = formatCents(subTotalCents);
     document.getElementById("tax").innerText = formatCents(taxCents);
+    document.getElementById("adjustment-note").innerText = getSmallDifferenceNotice(taxCents);
 
 
     const glTable = document.querySelector("#gl-table");

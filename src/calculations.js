@@ -1,4 +1,6 @@
 (function (global) {
+  const SMALL_TOTAL_DIFFERENCE_LIMIT_CENTS = 10;
+
   function toCents(value) {
     const amount = Number(value);
 
@@ -55,7 +57,7 @@
       .sort((a, b) => b.remainder - a.remainder || a.index - b.index)
       .map((distribution, sortedIndex) => ({
         ...distribution,
-        taxCents: distribution.taxCents + (sortedIndex < remainingCents ? 1 : 0),
+        adjustmentCents: distribution.adjustmentCents + (sortedIndex < remainingCents ? 1 : 0),
       }))
       .sort((a, b) => a.index - b.index)
       .map(({ index, remainder, ...distribution }) => distribution);
@@ -64,8 +66,10 @@
   function distributeTaxByGl({ invoiceTotal, items }) {
     const subtotalCents = getSubtotalCents(items);
     const taxCents = getTaxCents(invoiceTotal, subtotalCents);
+    const adjustmentSign = taxCents < 0 ? -1 : 1;
+    const absoluteTaxCents = Math.abs(taxCents);
 
-    if (subtotalCents <= 0 || taxCents <= 0) {
+    if (subtotalCents <= 0 || absoluteTaxCents === 0) {
       return getGlSubtotals(items).map((group) => ({
         glNumber: group.glNumber,
         glSubtotalCents: group.subtotalCents,
@@ -79,34 +83,43 @@
     }
 
     const initialDistributions = getGlSubtotals(items).map((group) => {
-      const exactTax = (group.subtotalCents * taxCents) / subtotalCents;
-      const baseTaxCents = Math.floor(exactTax);
+      const exactTax = (group.subtotalCents * absoluteTaxCents) / subtotalCents;
+      const baseAdjustmentCents = Math.floor(exactTax);
 
       return {
         glNumber: group.glNumber,
         glSubtotalCents: group.subtotalCents,
-        taxCents: baseTaxCents,
-        remainder: exactTax - baseTaxCents,
+        adjustmentCents: baseAdjustmentCents,
+        remainder: exactTax - baseAdjustmentCents,
       };
     });
 
-    const assignedTaxCents = initialDistributions.reduce((sum, group) => sum + group.taxCents, 0);
-    const balancedDistributions = distributeRemainder(initialDistributions, taxCents - assignedTaxCents);
+    const assignedTaxCents = initialDistributions.reduce((sum, group) => sum + group.adjustmentCents, 0);
+    const balancedDistributions = distributeRemainder(initialDistributions, absoluteTaxCents - assignedTaxCents);
 
     return balancedDistributions.map((group) => {
-      const glAfterTaxCents = group.glSubtotalCents + group.taxCents;
+      const glTaxCents = group.adjustmentCents * adjustmentSign;
+      const glAfterTaxCents = group.glSubtotalCents + glTaxCents;
 
       return {
         glNumber: group.glNumber,
         glSubtotalCents: group.glSubtotalCents,
-        glTaxCents: group.taxCents,
+        glTaxCents,
         glAfterTaxCents,
         glPercentage: ((group.glSubtotalCents / subtotalCents) * 100).toFixed(2),
         glTotal: formatCents(group.glSubtotalCents),
-        glTax: formatCents(group.taxCents),
+        glTax: formatCents(glTaxCents),
         glAfterTax: formatCents(glAfterTaxCents),
       };
     });
+  }
+
+  function getSmallDifferenceNotice(differenceCents) {
+    if (differenceCents === 0 || Math.abs(differenceCents) > SMALL_TOTAL_DIFFERENCE_LIMIT_CENTS) {
+      return "";
+    }
+
+    return `Small invoice total difference of ${formatCents(Math.abs(differenceCents))} was distributed across GL totals.`;
   }
 
   function isPositiveCents(cents) {
@@ -114,26 +127,36 @@
   }
 
   function validateInvoiceEntry({ invoiceTotal, itemGL, itemCost, existingItems = [] }) {
+    const invoiceTotalValue = String(invoiceTotal || "").trim();
     const glNumber = String(itemGL || "").trim();
+    const itemCostValue = String(itemCost || "").trim();
     const itemCostCents = toCents(itemCost);
     const invoiceTotalCents = toCents(invoiceTotal);
 
-    if (!glNumber) {
-      return { isValid: false, message: "Please enter GL number" };
-    }
-
-    if (!isPositiveCents(itemCostCents)) {
-      return { isValid: false, message: "Please enter valid cost" };
+    if (!invoiceTotalValue) {
+      return { isValid: false, message: "Please enter invoice total" };
     }
 
     if (!isPositiveCents(invoiceTotalCents)) {
       return { isValid: false, message: "Please enter valid invoice total" };
     }
 
+    if (!glNumber) {
+      return { isValid: false, message: "Please enter GL number" };
+    }
+
+    if (!itemCostValue) {
+      return { isValid: false, message: "Please enter item cost" };
+    }
+
+    if (!isPositiveCents(itemCostCents)) {
+      return { isValid: false, message: "Please enter valid cost" };
+    }
+
     const nextSubtotalCents = getSubtotalCents(existingItems) + itemCostCents;
 
-    if (nextSubtotalCents > invoiceTotalCents) {
-      return { isValid: false, message: "Invoice total must be at least subtotal" };
+    if (nextSubtotalCents - invoiceTotalCents > SMALL_TOTAL_DIFFERENCE_LIMIT_CENTS) {
+      return { isValid: false, message: "Invoice total should be greater than item subtotal" };
     }
 
     return {
@@ -151,6 +174,7 @@
     formatCents,
     getGlSubtotals,
     getSubtotalCents,
+    getSmallDifferenceNotice,
     getTaxCents,
     groupItemsByGl,
     toCents,
