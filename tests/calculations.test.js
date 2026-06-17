@@ -3,6 +3,8 @@
     distributeTaxByGl,
     formatCents,
     getGlSubtotals,
+    getPurchaseSubtotalCents,
+    getRefundTotalCents,
     getSubtotalCents,
     getSmallDifferenceNotice,
     getTaxCents,
@@ -262,6 +264,47 @@
       "Small negative differences should be noted."
     );
     assertEqual(getSmallDifferenceNotice(11), "", "Larger differences should not use the small-difference note.");
+  });
+
+  test("normalizes refund lines as negative amounts", () => {
+    const result = validateInvoiceEntry({
+      invoiceTotal: "18.00",
+      itemGL: "1000",
+      itemCost: "2.00",
+      itemType: "refund",
+    });
+
+    assertEqual(result.isValid, true, "Refund line should accept a positive entered amount.");
+    assertEqual(result.itemCost, "-2.00", "Refund line should store as a negative amount.");
+    assertEqual(result.itemType, "refund", "Refund line should retain its type.");
+  });
+
+  test("refund lines reduce net subtotal and GL subtotal", () => {
+    const items = [
+      { itemGL: "1000", itemCost: "15.00", itemType: "purchase" },
+      { itemGL: "1000", itemCost: "-2.00", itemType: "refund" },
+    ];
+
+    assertEqual(getSubtotalCents(items), 1300, "Refund line should reduce net subtotal.");
+    assertEqual(getPurchaseSubtotalCents(items), 1500, "Purchase subtotal should exclude refund lines.");
+    assertEqual(getRefundTotalCents(items), -200, "Refund total should include refund lines.");
+    assertEqual(getGlSubtotals(items)[0].subtotal, "13.00", "Refund line should reduce its GL subtotal.");
+  });
+
+  test("refund lines do not reduce the tax allocation base", () => {
+    const distribution = distributeTaxByGl({
+      invoiceTotal: "23.00",
+      items: [
+        { itemGL: "1000", itemCost: "15.00", itemType: "purchase" },
+        { itemGL: "1000", itemCost: "-2.00", itemType: "refund" },
+        { itemGL: "2000", itemCost: "5.00", itemType: "purchase" },
+      ],
+    });
+
+    assertEqual(distribution[0].glTotal, "13.00", "GL subtotal should show net refund impact.");
+    assertEqual(distribution[0].glTax, "3.75", "Refund should not reduce this GL's purchase tax allocation base.");
+    assertEqual(distribution[0].glAfterTax, "16.75", "Refund GL total should include net subtotal plus allocated tax.");
+    assertEqual(distribution[1].glTax, "1.25", "Other purchase GL should keep its purchase tax allocation share.");
   });
 
   const results = tests.map(({ name, callback }) => {
