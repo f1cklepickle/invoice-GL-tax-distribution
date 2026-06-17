@@ -1,0 +1,109 @@
+(function () {
+  const {
+    formatCents,
+    getGlSubtotals,
+    getSubtotalCents,
+    getTaxCents,
+    groupItemsByGl,
+    toCents,
+  } = window.invoiceCalculations;
+
+  const tests = [];
+
+  function test(name, callback) {
+    tests.push({ name, callback });
+  }
+
+  function assertEqual(actual, expected, message) {
+    if (actual !== expected) {
+      throw new Error(`${message} Expected ${expected}, received ${actual}.`);
+    }
+  }
+
+  function assertDeepEqual(actual, expected, message) {
+    const actualJson = JSON.stringify(actual);
+    const expectedJson = JSON.stringify(expected);
+
+    if (actualJson !== expectedJson) {
+      throw new Error(`${message} Expected ${expectedJson}, received ${actualJson}.`);
+    }
+  }
+
+  function renderResults(results) {
+    const summary = document.querySelector("#summary");
+    const list = document.querySelector("#results");
+    const passed = results.filter((result) => result.passed).length;
+
+    summary.textContent = `${passed}/${results.length} tests passing`;
+    summary.className = passed === results.length ? "pass" : "fail";
+
+    results.forEach((result) => {
+      const item = document.createElement("li");
+      item.className = result.passed ? "pass" : "fail";
+      item.textContent = result.passed ? `PASS: ${result.name}` : `FAIL: ${result.name} - ${result.error}`;
+      list.appendChild(item);
+    });
+  }
+
+  test("converts decimal dollar values to cents", () => {
+    assertEqual(toCents("12.34"), 1234, "Dollar string should convert to cents.");
+    assertEqual(toCents(0.1 + 0.2), 30, "Floating point math should round to cents.");
+  });
+
+  test("formats cents as a two-decimal amount", () => {
+    assertEqual(formatCents(1234), "12.34", "Positive cents should format as dollars.");
+    assertEqual(formatCents(0), "0.00", "Zero cents should format as zero dollars.");
+  });
+
+  test("groups invoice items by GL number", () => {
+    const groups = groupItemsByGl([
+      { itemGL: "1000", itemCost: "10.00" },
+      { itemGL: "2000", itemCost: "5.50" },
+      { itemGL: "1000", itemCost: "2.25" },
+    ]);
+
+    assertEqual(groups["1000"].subtotalCents, 1225, "Repeated GL should accumulate subtotal.");
+    assertEqual(groups["2000"].subtotalCents, 550, "Single GL should retain its subtotal.");
+    assertEqual(groups["1000"].items.length, 2, "Repeated GL should retain grouped items.");
+  });
+
+  test("calculates invoice subtotal from line items", () => {
+    const subtotal = getSubtotalCents([
+      { itemGL: "1000", itemCost: "10.00" },
+      { itemGL: "2000", itemCost: "5.50" },
+      { itemGL: "1000", itemCost: "2.25" },
+    ]);
+
+    assertEqual(subtotal, 1775, "Line item costs should add to subtotal cents.");
+  });
+
+  test("calculates tax as invoice total less subtotal", () => {
+    const tax = getTaxCents("20.00", 1775);
+
+    assertEqual(tax, 225, "Tax should be invoice total less subtotal.");
+  });
+
+  test("returns formatted GL subtotals", () => {
+    const subtotals = getGlSubtotals([
+      { itemGL: "1000", itemCost: "10.00" },
+      { itemGL: "2000", itemCost: "5.50" },
+      { itemGL: "1000", itemCost: "2.25" },
+    ]);
+
+    assertDeepEqual(subtotals, [
+      { glNumber: "1000", subtotalCents: 1225, subtotal: "12.25" },
+      { glNumber: "2000", subtotalCents: 550, subtotal: "5.50" },
+    ], "GL subtotals should include cents and display amounts.");
+  });
+
+  const results = tests.map(({ name, callback }) => {
+    try {
+      callback();
+      return { name, passed: true };
+    } catch (error) {
+      return { name, passed: false, error: error.message };
+    }
+  });
+
+  renderResults(results);
+})();

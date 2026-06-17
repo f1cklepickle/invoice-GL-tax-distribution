@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Calculation Tests</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.5;
+        margin: 2rem;
+      }
+
+      .pass {
+        color: #1f7a37;
+      }
+
+      .fail {
+        color: #b42318;
+      }
+
+      li {
+        margin-bottom: 0.35rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Invoice Calculation Tests</h1>
+    <p id="summary">Running tests...</p>
+    <ol id="results"></ol>
+
+    <script src="../src/calculations.js"></script>
+    <script src="./calculations.test.js"></script>
+  </body>
+</html>
