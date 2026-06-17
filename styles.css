@@ -140,6 +140,13 @@ main {
   margin-top: 4px;
 }
 
+.demoActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .enterItemContainer {
   display: flex;
   flex-direction: row;
@@ -183,7 +190,9 @@ main {
   margin-bottom: 6px;
 }
 
-.searchBtn {
+.searchBtn,
+#load-demo-button,
+#reset-invoice-button {
   align-self: center;
   border: outset;
   border-radius: 5px;
@@ -193,6 +202,10 @@ main {
   min-height: 32px;
   padding: 5px 12px;
   cursor: pointer;
+}
+
+#reset-invoice-button {
+  background-color: #d6d6d6;
 }
 
 .resultsContainer {

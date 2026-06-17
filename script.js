@@ -1,6 +1,40 @@
-let list = []
-let itemIdNum = 1
-let newList = []
+let list = [];
+let itemIdNum = 1;
+
+const DEMO_INVOICE_TOTAL = "142.36";
+const DEMO_INVOICE_ITEMS = [
+  {
+    itemGL: "6100",
+    itemType: "purchase",
+    itemName: "Demo printer paper",
+    itemCost: "42.50",
+  },
+  {
+    itemGL: "6200",
+    itemType: "purchase",
+    itemName: "Demo desk organizer",
+    itemCost: "18.75",
+  },
+  {
+    itemGL: "6300",
+    itemType: "purchase",
+    itemName: "Demo toner sampler",
+    itemCost: "31.20",
+  },
+  {
+    itemGL: "6100",
+    itemType: "refund",
+    itemName: "Demo returned supply credit",
+    itemCost: "-4.50",
+  },
+  {
+    itemGL: "6200",
+    itemType: "purchase",
+    itemName: "Demo shipping supplies",
+    itemCost: "37.40",
+  },
+];
+
 const {
   distributeTaxByGl,
   formatCents,
@@ -13,203 +47,165 @@ const {
   validateInvoiceEntry,
 } = window.invoiceCalculations;
 
-function getBtnId() {
-  return list.length;
+const targetInput = document.querySelectorAll("input");
+const focusTotal = document.querySelector("#inputTotal");
+const searchValue = document.getElementById("inputSearch");
+const searchBtn = document.querySelector(".searchBtn");
+const loadDemoButton = document.getElementById("load-demo-button");
+const resetInvoiceButton = document.getElementById("reset-invoice-button");
+
+targetInput.forEach((input) => {
+  input.addEventListener("focus", function () {
+    input.classList.add("input-focus");
+  });
+
+  input.addEventListener("blur", function () {
+    input.classList.toggle("input-focus");
+  });
+});
+
+focusTotal.focus();
+
+function createInvoiceItem({ itemGL, itemType, itemName, itemCost }) {
+  const nextItemId = itemIdNum;
+  const newItem = {
+    itemGL,
+    itemType,
+    itemName,
+    itemCost,
+    itemId: nextItemId,
+    btnId: nextItemId - 1,
+  };
+
+  itemIdNum++;
+  return newItem;
 }
 
-const targetInput = document.querySelectorAll("input");
+function resetRenderedInvoice() {
+  document.getElementById("invoice-total").innerText = "";
+  document.getElementById("purchase-subtotal").innerText = "";
+  document.getElementById("refund-total").innerText = "";
+  document.getElementById("subtotal").innerText = "";
+  document.getElementById("tax").innerText = "";
+  document.getElementById("adjustment-note").innerText = "";
+  document.querySelector("#marksExtra").innerHTML = "";
+  document.querySelector("#gl-table").innerHTML = "";
+}
 
-  targetInput.forEach(input => {
+function renderInvoice() {
+  resetRenderedInvoice();
 
-    input.addEventListener('focus', function() {
-      input.classList.add("input-focus");
-  })
-    input.addEventListener('blur', function() {
-      input.classList.toggle("input-focus");
-    })
-   
-  });
-
-const focusTotal = document.querySelector("#inputTotal");
-  focusTotal.focus();
-
-function addNewGl(item = null) {
-
-  const total = document.getElementById("inputTotal").value;
-  const validation = item ? null : validateInvoiceEntry({
-    invoiceTotal: total,
-    itemGL: document.getElementById("inputGl").value,
-    itemCost: document.getElementById("inputCost").value,
-    itemType: document.getElementById("inputType").value,
-    existingItems: list,
-  });
-
-  if (validation && !validation.isValid) {
-    alert(validation.message);
+  if (list.length === 0) {
     return;
   }
-  
-      const newItem = item || {
-        itemGL: validation.glNumber,
-        itemType: validation.itemType,
-        itemName: document.getElementById("inputName").value,
-        itemCost: validation.itemCost,
-        itemId: itemIdNum,
-        btnId: getBtnId(),
-        removeItem: function(event) {
-          const buttonPressed = event.target.closest("button");
 
-          const targetXBtn = buttonPressed.dataset.targetBtn;
+  const total = document.getElementById("inputTotal").value;
+  const subTotalCents = getSubtotalCents(list);
+  const purchaseSubtotalCents = getPurchaseSubtotalCents(list);
+  const refundTotalCents = getRefundTotalCents(list);
+  const taxCents = getTaxCents(total, subTotalCents);
 
-          const targetIndex = list.findIndex(i => Number(i.btnId) === Number(targetXBtn));
-            if (targetIndex !== -1) {
-              list.splice(targetIndex, 1);
-              newList = [...list];
-              renderList()
-            }
-          }
-        }
+  document.getElementById("invoice-total").innerText = formatCents(toCents(total));
+  document.getElementById("purchase-subtotal").innerText = formatCents(purchaseSubtotalCents);
+  document.getElementById("refund-total").innerText = formatCents(refundTotalCents);
+  document.getElementById("subtotal").innerText = formatCents(subTotalCents);
+  document.getElementById("tax").innerText = formatCents(taxCents);
+  document.getElementById("adjustment-note").innerText = getSmallDifferenceNotice(taxCents);
 
-    if(!item) {
-    list.push(newItem);
-        itemIdNum++;    
-    }
-    const subTotalCents = getSubtotalCents(list);
-    const purchaseSubtotalCents = getPurchaseSubtotalCents(list);
-    const refundTotalCents = getRefundTotalCents(list);
-    const taxCents = getTaxCents(total, subTotalCents);
+  const glTable = document.querySelector("#gl-table");
+  glTable.style.cssText = "width: 100%;";
 
-    document.getElementById("invoice-total").innerText = formatCents(toCents(total));
-    document.getElementById("purchase-subtotal").innerText = formatCents(purchaseSubtotalCents);
-    document.getElementById("refund-total").innerText = formatCents(refundTotalCents);
-    document.getElementById("subtotal").innerText = formatCents(subTotalCents);
-    document.getElementById("tax").innerText = formatCents(taxCents);
-    document.getElementById("adjustment-note").innerText = getSmallDifferenceNotice(taxCents);
+  const glDetails = distributeTaxByGl({
+    invoiceTotal: total,
+    items: list,
+  });
 
-
-    const glTable = document.querySelector("#gl-table");
-      glTable.style.cssText = "width: 100%;"
-      glTable.innerHTML = "";
-
-    const glDetails = distributeTaxByGl({
-      invoiceTotal: total,
-      items: list,
-    });
-    
-    glDetails.forEach((gl) => {
-
+  glDetails.forEach((gl) => {
     const glRow = document.createElement("tr");
-      glRow.setAttribute("id", `gl-row${gl.glNumber}`);
-      glRow.style.cssText = "display: flex;";
-    
+    glRow.setAttribute("id", `gl-row${gl.glNumber}`);
+    glRow.style.cssText = "display: flex;";
+
     const glNumberCell = document.createElement("th");
-      glNumberCell.innerText = `GL Number: ${gl.glNumber}`;
-      glNumberCell.style.cssText = "";
+    glNumberCell.innerText = `GL Number: ${gl.glNumber}`;
 
     const glSubtotalCell = document.createElement("th");
-      glSubtotalCell.innerText = `GL Subtotal: ${gl.glTotal}`;
-      glSubtotalCell.style.cssText = "";
+    glSubtotalCell.innerText = `GL Subtotal: ${gl.glTotal}`;
 
     const glTotalCell = document.createElement("th");
-      glTotalCell.innerText = `GL Total: ${gl.glAfterTax}`;
-      glTotalCell.style.cssText = "";
+    glTotalCell.innerText = `GL Total: ${gl.glAfterTax}`;
 
     const glTaxCell = document.createElement("th");
-      glTaxCell.innerText = `GL Tax: ${gl.glTax}`;
-      glTaxCell.style.cssText = "";
+    glTaxCell.innerText = `GL Tax: ${gl.glTax}`;
 
     const glDivider = document.createElement("div");
-      glDivider.setAttribute("data-glNumber", `${gl.glNumber}`);
-      glDivider.setAttribute("id", "glDivider");
+    glDivider.setAttribute("data-glNumber", `${gl.glNumber}`);
+    glDivider.setAttribute("id", "glDivider");
 
     const itemBox = document.createElement("div");
-      itemBox.setAttribute("data-glItemBox", `${gl.glNumber}`)
-      itemBox.classList.add('itemBox')
-      itemBox.style.cssText = ""
+    itemBox.setAttribute("data-glItemBox", `${gl.glNumber}`);
+    itemBox.classList.add("itemBox");
 
     const bookmarkBox = document.querySelector("#marksExtra");
-
-    if(!bookmarkBox.querySelector(`.glMark${gl.glNumber}`)){
-
     const glBookmark = document.createElement("li");
-      glBookmark.innerHTML = `<a>GL Number: <strong>${(gl.glNumber)}</strong> - GL Total: <strong>${gl.glAfterTax}</strong></a>`;
-      glBookmark.classList.add(`glMark${gl.glNumber}`);
-      glBookmark.setAttribute("tabindex", "-1");
-      glBookmark.setAttribute("id", "linkSelector")
-      glBookmark.setAttribute("href", `#glMark${gl.glNumber}`)
-      glBookmark.style.cssText = "";
+    glBookmark.innerHTML = `<a>GL Number: <strong>${gl.glNumber}</strong> - GL Total: <strong>${gl.glAfterTax}</strong></a>`;
+    glBookmark.classList.add(`glMark${gl.glNumber}`);
+    glBookmark.setAttribute("tabindex", "-1");
+    glBookmark.setAttribute("id", "linkSelector");
+    glBookmark.setAttribute("href", `#glMark${gl.glNumber}`);
 
-      bookmarkBox.appendChild(glBookmark);
-
-    const glLinks = document.getElementsByClassName(`glMark${gl.glNumber}`);
-      Array.from(glLinks).forEach(link => {
-        link.addEventListener('click', function (glFocus) {
-          glFocus.preventDefault();
-        const glTarget = document.getElementById(`gl-row${gl.glNumber}`);
-          glTarget.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'nearest'
-        });
+    glBookmark.addEventListener("click", function (glFocus) {
+      glFocus.preventDefault();
+      const glTarget = document.getElementById(`gl-row${gl.glNumber}`);
+      glTarget.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
       });
     });
 
-    } else if (bookmarkBox.querySelector(`.glMark${gl.glNumber}`)) {
-      const updateBookmark = document.querySelector(`.glMark${gl.glNumber}`);
-      updateBookmark.innerHTML = `<a>GL Number: <strong>${(gl.glNumber)}</strong> - GL Total: <strong>${gl.glAfterTax}</strong></a>`;
-    }
-
+    bookmarkBox.appendChild(glBookmark);
     glRow.appendChild(glNumberCell);
     glRow.appendChild(glSubtotalCell);
     glRow.appendChild(glTaxCell);
     glRow.appendChild(glTotalCell);
     glDivider.appendChild(glRow);
     glDivider.appendChild(itemBox);
-
     glTable.appendChild(glDivider);
+  });
 
-    },);
-
-  const itemList = list;
-
-  itemList.forEach((item) => {
-
+  list.forEach((item) => {
     const targetItemBox = document.querySelector(`div[data-glItemBox='${item.itemGL}']`);
 
     const listItem = document.createElement("tr");
-      listItem.style.cssText = "margin-bottom: 5px; display: flex;";
-      listItem.classList.add(`${item.itemGL}`);
+    listItem.style.cssText = "margin-bottom: 5px; display: flex;";
+    listItem.classList.add(`${item.itemGL}`);
 
-      const listItemGL = document.createElement("td");
-        listItemGL.innerText = `Item GL: ${item.itemGL}`;
-        listItemGL.style.cssText = "";
+    const listItemGL = document.createElement("td");
+    listItemGL.innerText = `Item GL: ${item.itemGL}`;
 
-      const listItemCost = document.createElement("td");
-        listItemCost.innerText = `Item Cost: ${item.itemCost}`;
-        listItemCost.style.cssText = ";";
+    const listItemCost = document.createElement("td");
+    listItemCost.innerText = `Item Cost: ${item.itemCost}`;
 
-      const listItemType = document.createElement("td");
-        listItemType.innerText = `Line Type: ${item.itemType === "refund" ? "Refund" : "Purchase"}`;
-        listItemType.style.cssText = "";
+    const listItemType = document.createElement("td");
+    listItemType.innerText = `Line Type: ${item.itemType === "refund" ? "Refund" : "Purchase"}`;
 
-      const listItemName = document.createElement("td");
-        listItemName.innerText = `Item Name: ${item.itemName}`;
-        listItemName.style.cssText = "";
+    const listItemName = document.createElement("td");
+    listItemName.innerText = `Item Name: ${item.itemName}`;
 
-      const listItemId = document.createElement("td");
-        listItemId.innerText = `Item ID: ${item.itemId}`;
-        listItemId.style.cssText = "";
+    const listItemId = document.createElement("td");
+    listItemId.innerText = `Item ID: ${item.itemId}`;
 
-      const listItemX = document.createElement("td");
-        listItemX.style.cssText = "flex-grow: -1;";
-        listItemX.classList.add(`xBtnContainer`);
+    const listItemX = document.createElement("td");
+    listItemX.style.cssText = "flex-grow: -1;";
+    listItemX.classList.add("xBtnContainer");
 
-      const xBtn = document.createElement("button");
-        xBtn.id = `xBtn-${item.btnId}}`
-        xBtn.setAttribute("tabindex", "-1")
-        xBtn.classList.add(`delBtn`);
-        xBtn.dataset.targetBtn = `${item.btnId}`;
-        xBtn.innerText = "x"
+    const xBtn = document.createElement("button");
+    xBtn.id = `xBtn-${item.btnId}`;
+    xBtn.setAttribute("tabindex", "-1");
+    xBtn.classList.add("delBtn");
+    xBtn.dataset.targetBtn = `${item.btnId}`;
+    xBtn.innerText = "x";
+    xBtn.addEventListener("click", removeInvoiceItem);
 
     listItemX.appendChild(xBtn);
     listItem.appendChild(listItemGL);
@@ -218,132 +214,147 @@ function addNewGl(item = null) {
     listItem.appendChild(listItemName);
     listItem.appendChild(listItemId);
     listItem.appendChild(listItemX);
-    
+
     targetItemBox.appendChild(listItem);
-  },);
+  });
+}
 
-  const delBtns = document.querySelectorAll('.delBtn');
-    delBtns.forEach(button => {
-      button.addEventListener('click', removeTarget);
-      button.addEventListener('click', function (event) {
-        newItem.removeItem(event)
-      });
-    });
+function removeInvoiceItem(event) {
+  const buttonPressed = event.target.closest("button");
+  const targetXBtn = buttonPressed.dataset.targetBtn;
+  const targetIndex = list.findIndex((item) => Number(item.btnId) === Number(targetXBtn));
 
-  function removeTarget() {
-    this.closest('tr').remove();
-  };
-  const costFocus = document.getElementById('inputCost');
-      costFocus.addEventListener('focus', function() {
-      this.select();
+  if (targetIndex !== -1) {
+    list.splice(targetIndex, 1);
+    reindexInvoiceItems();
+    renderInvoice();
+  }
+}
+
+function reindexInvoiceItems() {
+  itemIdNum = 1;
+  list = list.map((item, index) => ({
+    ...item,
+    itemId: itemIdNum++,
+    btnId: index,
+  }));
+}
+
+function addNewGl() {
+  const total = document.getElementById("inputTotal").value;
+  const validation = validateInvoiceEntry({
+    invoiceTotal: total,
+    itemGL: document.getElementById("inputGl").value,
+    itemCost: document.getElementById("inputCost").value,
+    itemType: document.getElementById("inputType").value,
+    existingItems: list,
+  });
+
+  if (!validation.isValid) {
+    alert(validation.message);
+    return;
+  }
+
+  list.push(createInvoiceItem({
+    itemGL: validation.glNumber,
+    itemType: validation.itemType,
+    itemName: document.getElementById("inputName").value,
+    itemCost: validation.itemCost,
+  }));
+
+  renderInvoice();
+
+  const costFocus = document.getElementById("inputCost");
+  costFocus.addEventListener("focus", function () {
+    this.select();
   });
 
   costFocus.blur();
-
   costFocus.focus();
-};
+}
 
-function renderList() {
-
-  const clearBookmarks = document.querySelector('#marksExtra');
-    clearBookmarks.innerHTML = "";
-
-  const clearGlTable = document.querySelector('#gl-table');
-    clearGlTable.innerHTML = "";
-
-  function getUpdatedList() {
-    return newList;
-  }
-
-  const updateList = getUpdatedList();
-
-  list.splice(0, list.length);
+function loadDemoInvoice() {
+  document.getElementById("inputTotal").value = DEMO_INVOICE_TOTAL;
+  document.getElementById("inputType").value = "purchase";
+  document.getElementById("inputGl").value = "";
+  document.getElementById("inputCost").value = "";
+  document.getElementById("inputName").value = "";
+  searchValue.value = "";
+  document.querySelector(".resultsContainer").innerText = "Search Results";
 
   itemIdNum = 1;
+  list = DEMO_INVOICE_ITEMS.map((item) => createInvoiceItem(item));
+  renderInvoice();
+  document.getElementById("inputCost").focus();
+}
 
-  updateList.forEach(item => {
-
-    const newItem = {
-      itemGL: item.itemGL,
-      itemType: item.itemType,
-      itemName: item.itemName,
-      itemCost: item.itemCost,
-      itemId: itemIdNum,
-      btnId: getBtnId(),
-      removeItem: item.removeItem,
-    } 
-    
-    list.push(newItem);
-    itemIdNum++;
-    addNewGl(newItem);
-  })
-};
-
-document.addEventListener("keydown", function(event) {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    addNewGl();
-  }
-}) 
-
-const searchValue = document.getElementById('inputSearch');
+function resetInvoice() {
+  list = [];
+  itemIdNum = 1;
+  document.getElementById("inputTotal").value = "";
+  document.getElementById("inputType").value = "purchase";
+  document.getElementById("inputGl").value = "";
+  document.getElementById("inputCost").value = "";
+  document.getElementById("inputName").value = "";
+  searchValue.value = "";
+  document.querySelector(".resultsContainer").innerText = "Search Results";
+  resetRenderedInvoice();
+  focusTotal.focus();
+}
 
 function searchList() {
+  const results = document.querySelector(".resultsContainer");
+  results.innerText = "";
+  const searchCost = Number(searchValue.value).toFixed(2);
 
-  const results = document.querySelector('.resultsContainer');
-        results.innerText = "";
+  if (searchValue.value === "") {
+    results.innerText = "Search Results";
+    return;
+  }
 
-  list.forEach(item => {
+  const matchingItems = list.filter((item) => item.itemCost === searchCost);
 
-    if (item.itemCost !== Number(searchValue.value).toFixed(2)) {
+  if (matchingItems.length === 0) {
+    results.innerText = "No matches";
+    return;
+  }
 
-      const results = document.querySelector('.resultsContainer');
-        results.innerText = "No matches";
-
-    } else if (searchValue.value == "") {
-
-      const results = document.querySelector('.resultsContainer');
-        results.innerText = "Search Results";
-
-    } else if (item.itemCost === Number(searchValue.value).toFixed(2)) {
-        
+  matchingItems.forEach((item) => {
       const glRow = document.createElement("tr");
       glRow.setAttribute("id", `gl-row${item.itemGL}`);
       glRow.style.cssText = "display: flex; font-size: 20px; width: 1100px; color: black; border: ridge; border-width: 5px; border-radius: 5px; border-color: rgb(144, 164, 241);";
-    
-    const itemGlCell = document.createElement("th");
-    itemGlCell.innerText = `GL Number: ${item.itemGL}`;
-    itemGlCell.style.cssText = "background-color: rgb(206, 215, 250);";
 
-    const itemNameCell = document.createElement("th");
-    itemNameCell.innerText = `Item Name: ${item.itemName}`;
-    itemNameCell.style.cssText = "background-color: rgb(206, 215, 250);";
+      const itemGlCell = document.createElement("th");
+      itemGlCell.innerText = `GL Number: ${item.itemGL}`;
+      itemGlCell.style.cssText = "background-color: rgb(206, 215, 250);";
 
-    const itemCostCell = document.createElement("th");
-    itemCostCell.innerText = `Item cost: ${item.itemCost}`;
-    itemCostCell.style.cssText = "background-color: rgb(206, 215, 250);";
+      const itemNameCell = document.createElement("th");
+      itemNameCell.innerText = `Item Name: ${item.itemName}`;
+      itemNameCell.style.cssText = "background-color: rgb(206, 215, 250);";
 
-    const itemIdCell = document.createElement("th");
-    itemIdCell.innerText = `Item Id: ${item.itemId}`;
-    itemIdCell.style.cssText = "background-color: rgb(206, 215, 250);";
+      const itemCostCell = document.createElement("th");
+      itemCostCell.innerText = `Item cost: ${item.itemCost}`;
+      itemCostCell.style.cssText = "background-color: rgb(206, 215, 250);";
 
-    glRow.appendChild(itemGlCell);
-    glRow.appendChild(itemNameCell);
-    glRow.appendChild(itemCostCell);
-    glRow.appendChild(itemIdCell);
+      const itemIdCell = document.createElement("th");
+      itemIdCell.innerText = `Item Id: ${item.itemId}`;
+      itemIdCell.style.cssText = "background-color: rgb(206, 215, 250);";
 
-    results.appendChild(glRow);
-
-    } 
-  })
-
+      glRow.appendChild(itemGlCell);
+      glRow.appendChild(itemNameCell);
+      glRow.appendChild(itemCostCell);
+      glRow.appendChild(itemIdCell);
+      results.appendChild(glRow);
+  });
 }
 
-let searchBtn = document.querySelector('.searchBtn');
-      
-searchBtn.addEventListener('click', searchList);
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Enter" && event.target.tagName !== "BUTTON") {
+    event.preventDefault();
+    addNewGl();
+  }
+});
 
-
-
-
-
+searchBtn.addEventListener("click", searchList);
+loadDemoButton.addEventListener("click", loadDemoInvoice);
+resetInvoiceButton.addEventListener("click", resetInvoice);
