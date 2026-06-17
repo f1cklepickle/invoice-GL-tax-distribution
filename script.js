@@ -57,6 +57,11 @@ const toolbarMenuButtons = document.querySelectorAll(".toolbarMenuButton");
 const toolbarDropdown = document.getElementById("toolbar-dropdown");
 const menuBackdrop = document.getElementById("menu-backdrop");
 const toolbarPanels = document.querySelectorAll(".toolbarPanel");
+const capabilityStatusElements = {
+  preferences: document.getElementById("preference-storage-status"),
+  invoices: document.getElementById("invoice-storage-status"),
+  fileExport: document.getElementById("file-export-status"),
+};
 
 targetInput.forEach((input) => {
   input.addEventListener("focus", function () {
@@ -99,6 +104,81 @@ function closeToolbarMenu() {
   toolbarPanels.forEach((panel) => {
     panel.classList.remove("isActive");
   });
+}
+
+function canUseLocalStorage() {
+  const testKey = "invoice-tax-distribution-storage-test";
+
+  try {
+    localStorage.setItem(testKey, "available");
+    localStorage.removeItem(testKey);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+function canUseIndexedDb() {
+  const testDbName = "invoice-tax-distribution-indexeddb-test";
+
+  if (!("indexedDB" in window)) {
+    return Promise.resolve(false);
+  }
+
+  return new Promise((resolve) => {
+    let isSettled = false;
+    const request = indexedDB.open(testDbName, 1);
+
+    function finish(isSupported) {
+      if (isSettled) {
+        return;
+      }
+
+      isSettled = true;
+      resolve(isSupported);
+    }
+
+    request.onerror = function () {
+      finish(false);
+    };
+
+    request.onblocked = function () {
+      finish(false);
+    };
+
+    request.onsuccess = function () {
+      request.result.close();
+      indexedDB.deleteDatabase(testDbName);
+      finish(true);
+    };
+
+    window.setTimeout(function () {
+      finish(false);
+    }, 1000);
+  });
+}
+
+function canExportFiles() {
+  const testAnchor = document.createElement("a");
+
+  return (
+    "Blob" in window &&
+    "URL" in window &&
+    typeof URL.createObjectURL === "function" &&
+    "download" in testAnchor
+  );
+}
+
+function updateCapabilityStatus(element, isSupported) {
+  element.innerText = isSupported ? "Supported" : "Unavailable";
+  element.classList.toggle("isSupported", isSupported);
+  element.classList.toggle("isUnsupported", !isSupported);
+}
+
+async function renderCapabilityStatuses() {
+  updateCapabilityStatus(capabilityStatusElements.preferences, canUseLocalStorage());
+  updateCapabilityStatus(capabilityStatusElements.fileExport, canExportFiles());
+  updateCapabilityStatus(capabilityStatusElements.invoices, await canUseIndexedDb());
 }
 
 function createInvoiceItem({ itemGL, itemType, itemName, itemCost }) {
@@ -404,3 +484,4 @@ menuBackdrop.addEventListener("click", closeToolbarMenu);
 searchBtn.addEventListener("click", searchList);
 loadDemoButton.addEventListener("click", loadDemoInvoice);
 resetInvoiceButton.addEventListener("click", resetInvoice);
+renderCapabilityStatuses();
