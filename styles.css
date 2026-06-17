@@ -2,6 +2,13 @@ html, body {
   height: 100%;
 }
 
+:root {
+  --toolbar-background: #579fda;
+  --toolbar-border: #3b78ae;
+  --toolbar-active: #3f86c2;
+  --toolbar-text: #102333;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -81,6 +88,7 @@ a {
   flex-direction: column;
   flex-grow: 1;
   min-height: 0;
+  position: relative;
 }
 
 main {
@@ -92,17 +100,71 @@ main {
 
 .toolbarContainer {
   display: flex;
-  background-color: #579fda;
+  background-color: var(--toolbar-background);
   padding: 6px 10px;
   margin: 0 -10px 3px -10px;
   gap: 18px;
+  position: relative;
+  z-index: 30;
 }
 
-.profile, .settings, .shortcuts {
+.toolbarMenuButton {
+  appearance: none;
+  background-color: transparent;
+  color: var(--toolbar-text);
+  cursor: pointer;
+  font: inherit;
   border-radius: 3.5px;
-  border-bottom: ridge;
-  border-color: #647dee;
+  border: 0;
+  border-bottom: ridge 3px var(--toolbar-border);
   padding: 2px 4px;
+}
+
+.toolbarMenuButton:hover,
+.toolbarMenuButton[aria-pressed="true"] {
+  background-color: var(--toolbar-active);
+}
+
+.menuBackdrop {
+  position: absolute;
+  inset: 39px -10px 0 -10px;
+  z-index: 10;
+  background-color: transparent;
+}
+
+.toolbarDropdown {
+  position: absolute;
+  top: 35px;
+  left: -10px;
+  z-index: 20;
+  width: min(25vw, 360px);
+  min-width: 260px;
+  min-height: 25vh;
+  background-color: var(--toolbar-background);
+  color: var(--toolbar-text);
+  border: solid 1px var(--toolbar-border);
+  border-top: 0;
+  padding: 12px;
+  box-shadow:
+    8px 10px 0 rgba(31, 31, 31, 0.18),
+    12px 14px 18px rgba(31, 31, 31, 0.22);
+}
+
+.toolbarPanel {
+  display: none;
+}
+
+.toolbarPanel.isActive {
+  display: block;
+}
+
+.toolbarPanel h2 {
+  font-size: 1.2rem;
+  margin: 0 0 8px 0;
+}
+
+.toolbarPanel p {
+  margin: 0;
 }
 
 .invoiceSearchContainer {
@@ -399,5 +461,10 @@ main {
   .footer {
     flex-direction: column;
     gap: 6px;
+  }
+
+  .toolbarDropdown {
+    width: min(90vw, 360px);
+    min-width: 0;
   }
 }
