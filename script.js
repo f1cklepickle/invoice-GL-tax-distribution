@@ -4,6 +4,8 @@ let newList = []
 const {
   distributeTaxByGl,
   formatCents,
+  getPurchaseSubtotalCents,
+  getRefundTotalCents,
   getSubtotalCents,
   getSmallDifferenceNotice,
   getTaxCents,
@@ -73,9 +75,13 @@ function addNewGl(item = null) {
         itemIdNum++;    
     }
     const subTotalCents = getSubtotalCents(list);
+    const purchaseSubtotalCents = getPurchaseSubtotalCents(list);
+    const refundTotalCents = getRefundTotalCents(list);
     const taxCents = getTaxCents(total, subTotalCents);
 
     document.getElementById("invoice-total").innerText = formatCents(toCents(total));
+    document.getElementById("purchase-subtotal").innerText = formatCents(purchaseSubtotalCents);
+    document.getElementById("refund-total").innerText = formatCents(refundTotalCents);
     document.getElementById("subtotal").innerText = formatCents(subTotalCents);
     document.getElementById("tax").innerText = formatCents(taxCents);
     document.getElementById("adjustment-note").innerText = getSmallDifferenceNotice(taxCents);

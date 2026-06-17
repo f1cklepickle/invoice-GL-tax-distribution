@@ -47,6 +47,30 @@
     return items.reduce((sum, item) => sum + toCents(item.itemCost), 0);
   }
 
+  function getPurchaseSubtotalCents(items) {
+    return items.reduce((sum, item) => {
+      const itemCostCents = toCents(item.itemCost);
+
+      if (isRefundItem(item) || itemCostCents <= 0) {
+        return sum;
+      }
+
+      return sum + itemCostCents;
+    }, 0);
+  }
+
+  function getRefundTotalCents(items) {
+    return items.reduce((sum, item) => {
+      const itemCostCents = toCents(item.itemCost);
+
+      if (!isRefundItem(item) && itemCostCents >= 0) {
+        return sum;
+      }
+
+      return sum + itemCostCents;
+    }, 0);
+  }
+
   function getTaxCents(invoiceTotal, subtotalCents) {
     return toCents(invoiceTotal) - subtotalCents;
   }
@@ -212,6 +236,8 @@
     distributeTaxByGl,
     formatCents,
     getGlSubtotals,
+    getPurchaseSubtotalCents,
+    getRefundTotalCents,
     getSubtotalCents,
     getSmallDifferenceNotice,
     getTaxAllocationSubtotals,

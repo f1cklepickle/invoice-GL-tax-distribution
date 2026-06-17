@@ -3,6 +3,8 @@
     distributeTaxByGl,
     formatCents,
     getGlSubtotals,
+    getPurchaseSubtotalCents,
+    getRefundTotalCents,
     getSubtotalCents,
     getSmallDifferenceNotice,
     getTaxCents,
@@ -284,6 +286,8 @@
     ];
 
     assertEqual(getSubtotalCents(items), 1300, "Refund line should reduce net subtotal.");
+    assertEqual(getPurchaseSubtotalCents(items), 1500, "Purchase subtotal should exclude refund lines.");
+    assertEqual(getRefundTotalCents(items), -200, "Refund total should include refund lines.");
     assertEqual(getGlSubtotals(items)[0].subtotal, "13.00", "Refund line should reduce its GL subtotal.");
   });
 
