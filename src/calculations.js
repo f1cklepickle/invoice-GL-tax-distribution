@@ -49,6 +49,66 @@
     return toCents(invoiceTotal) - subtotalCents;
   }
 
+  function distributeRemainder(distributions, remainingCents) {
+    return distributions
+      .map((distribution, index) => ({ ...distribution, index }))
+      .sort((a, b) => b.remainder - a.remainder || a.index - b.index)
+      .map((distribution, sortedIndex) => ({
+        ...distribution,
+        taxCents: distribution.taxCents + (sortedIndex < remainingCents ? 1 : 0),
+      }))
+      .sort((a, b) => a.index - b.index)
+      .map(({ index, remainder, ...distribution }) => distribution);
+  }
+
+  function distributeTaxByGl({ invoiceTotal, items }) {
+    const subtotalCents = getSubtotalCents(items);
+    const taxCents = getTaxCents(invoiceTotal, subtotalCents);
+
+    if (subtotalCents <= 0 || taxCents <= 0) {
+      return getGlSubtotals(items).map((group) => ({
+        glNumber: group.glNumber,
+        glSubtotalCents: group.subtotalCents,
+        glTaxCents: 0,
+        glAfterTaxCents: group.subtotalCents,
+        glPercentage: subtotalCents > 0 ? ((group.subtotalCents / subtotalCents) * 100).toFixed(2) : "0.00",
+        glTotal: group.subtotal,
+        glTax: "0.00",
+        glAfterTax: group.subtotal,
+      }));
+    }
+
+    const initialDistributions = getGlSubtotals(items).map((group) => {
+      const exactTax = (group.subtotalCents * taxCents) / subtotalCents;
+      const baseTaxCents = Math.floor(exactTax);
+
+      return {
+        glNumber: group.glNumber,
+        glSubtotalCents: group.subtotalCents,
+        taxCents: baseTaxCents,
+        remainder: exactTax - baseTaxCents,
+      };
+    });
+
+    const assignedTaxCents = initialDistributions.reduce((sum, group) => sum + group.taxCents, 0);
+    const balancedDistributions = distributeRemainder(initialDistributions, taxCents - assignedTaxCents);
+
+    return balancedDistributions.map((group) => {
+      const glAfterTaxCents = group.glSubtotalCents + group.taxCents;
+
+      return {
+        glNumber: group.glNumber,
+        glSubtotalCents: group.glSubtotalCents,
+        glTaxCents: group.taxCents,
+        glAfterTaxCents,
+        glPercentage: ((group.glSubtotalCents / subtotalCents) * 100).toFixed(2),
+        glTotal: formatCents(group.glSubtotalCents),
+        glTax: formatCents(group.taxCents),
+        glAfterTax: formatCents(glAfterTaxCents),
+      };
+    });
+  }
+
   function isPositiveCents(cents) {
     return Number.isFinite(cents) && cents > 0;
   }
@@ -87,6 +147,7 @@
   }
 
   const invoiceCalculations = {
+    distributeTaxByGl,
     formatCents,
     getGlSubtotals,
     getSubtotalCents,

@@ -1,7 +1,14 @@
 let list = []
 let itemIdNum = 1
 let newList = []
-const { validateInvoiceEntry } = window.invoiceCalculations;
+const {
+  distributeTaxByGl,
+  formatCents,
+  getSubtotalCents,
+  getTaxCents,
+  toCents,
+  validateInvoiceEntry,
+} = window.invoiceCalculations;
 
 function getBtnId() {
   return list.length;
@@ -62,70 +69,22 @@ function addNewGl(item = null) {
     list.push(newItem);
         itemIdNum++;    
     }
-    
-     let sortedGL = list.reduce((GL , newItem) => {
-      if (!GL[newItem.itemGL]) {
-        GL[newItem.itemGL] = [];
-    } 
-        GL[newItem.itemGL].push(newItem);
-        return GL;
-    }, {});
-    
-    let totalCostByGL = Object.keys(sortedGL).map(GL => {
-      const totalCost = sortedGL[GL].reduce((sum, item) => {
-        return sum + Number(item.itemCost || 0)
-    }, 0);  
-          return {
-            glNumber: GL,
-            totalCost: totalCost.toFixed(2)
-    };
-    });
-    
-    let getSubTotal = function() {
-      return totalCostByGL.reduce((sum, obj) => {
-        return sum + Number(obj.totalCost || 0);
-    }, 0);
-    };
-    
-    const getTax = function() {
-    let subTotal = getSubTotal();
-    return Number(total) - subTotal;
-    };
-    
-    const addTax = function() {
-      const subTotal = getSubTotal();
-      const tax = getTax();
-        if (subTotal === 0)
-          return [];
-    
-      return totalCostByGL.map((gl) => {
-      const glTotal = Number(gl.totalCost)
-    const glPercentage = ((glTotal / subTotal) * 100).toFixed(2);
-    const glTax = ((glPercentage * (tax / 100)).toFixed(2));
-    const glAfterTax = Number((glTotal) + Number(glTax)).toFixed(2);
-      return {
-        glNumber: gl.glNumber,
-        glTotal: glTotal.toFixed(2),
-        glPercentage,
-        glTax,
-        glAfterTax,
-          };
-        });
+    const subTotalCents = getSubtotalCents(list);
+    const taxCents = getTaxCents(total, subTotalCents);
 
-      };
-        
-    const subTotal = getSubTotal();
-
-    document.getElementById("invoice-total").innerText = Number(total).toFixed(2);
-    document.getElementById("subtotal").innerText = subTotal.toFixed(2);
-    document.getElementById("tax").innerText = getTax().toFixed(2);
+    document.getElementById("invoice-total").innerText = formatCents(toCents(total));
+    document.getElementById("subtotal").innerText = formatCents(subTotalCents);
+    document.getElementById("tax").innerText = formatCents(taxCents);
 
 
     const glTable = document.querySelector("#gl-table");
       glTable.style.cssText = "width: 100%;"
       glTable.innerHTML = "";
 
-    const glDetails = addTax();
+    const glDetails = distributeTaxByGl({
+      invoiceTotal: total,
+      items: list,
+    });
     
     glDetails.forEach((gl) => {
 

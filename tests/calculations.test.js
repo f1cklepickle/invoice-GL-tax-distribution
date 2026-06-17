@@ -1,5 +1,6 @@
 (function () {
   const {
+    distributeTaxByGl,
     formatCents,
     getGlSubtotals,
     getSubtotalCents,
@@ -166,6 +167,40 @@
     assertEqual(result.glNumber, "1000", "GL number should be trimmed.");
     assertEqual(result.itemCost, "10.00", "Item cost should be formatted.");
     assertEqual(result.nextSubtotalCents, 1000, "Next subtotal should include the new item.");
+  });
+
+  test("distributes tax across GL subtotals", () => {
+    const distribution = distributeTaxByGl({
+      invoiceTotal: "33.00",
+      items: [
+        { itemGL: "1000", itemCost: "10.00" },
+        { itemGL: "2000", itemCost: "20.00" },
+      ],
+    });
+
+    assertDeepEqual(distribution.map((gl) => ({
+      glNumber: gl.glNumber,
+      glTax: gl.glTax,
+      glAfterTax: gl.glAfterTax,
+    })), [
+      { glNumber: "1000", glTax: "1.00", glAfterTax: "11.00" },
+      { glNumber: "2000", glTax: "2.00", glAfterTax: "22.00" },
+    ], "Tax should distribute by each GL subtotal share.");
+  });
+
+  test("balances rounding so GL totals tie to invoice total", () => {
+    const distribution = distributeTaxByGl({
+      invoiceTotal: "30.01",
+      items: [
+        { itemGL: "1000", itemCost: "10.00" },
+        { itemGL: "2000", itemCost: "10.00" },
+        { itemGL: "3000", itemCost: "10.00" },
+      ],
+    });
+    const glTotalCents = distribution.reduce((sum, gl) => sum + gl.glAfterTaxCents, 0);
+
+    assertEqual(glTotalCents, 3001, "Distributed GL totals should tie to invoice total cents.");
+    assertDeepEqual(distribution.map((gl) => gl.glTax), ["0.01", "0.00", "0.00"], "Rounding remainder should be assigned once.");
   });
 
   const results = tests.map(({ name, callback }) => {
