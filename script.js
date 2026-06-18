@@ -41,6 +41,14 @@ const DEFAULT_PROFILE_PREFERENCES = {
   density: "comfortable",
   textSize: "standard",
 };
+const INVOICE_SETTINGS_KEY = "invoice-tax-distribution-invoice-settings";
+const DEFAULT_INVOICE_SETTINGS = {
+  displayMode: "light",
+  showTaxDetails: true,
+  glSort: "default",
+  itemSort: "default",
+  namedItemsFirst: false,
+};
 const ACCENT_THEMES = {
   blue: {
     accent: "#579fda",
@@ -119,7 +127,18 @@ const densityPreference = document.getElementById("density-preference");
 const textSizePreference = document.getElementById("text-size-preference");
 const profilePreferenceStatus = document.getElementById("profile-preference-status");
 const resetProfilePreferencesButton = document.getElementById("reset-profile-preferences");
+const displayModeSetting = document.getElementById("display-mode-setting");
+const taxDetailSetting = document.getElementById("tax-detail-setting");
+const glSortSetting = document.getElementById("gl-sort-setting");
+const itemSortSetting = document.getElementById("item-sort-setting");
+const namedItemsFirstSetting = document.getElementById("named-items-first-setting");
+const invoiceSettingStatus = document.getElementById("invoice-setting-status");
+const resetInvoiceSettingsButton = document.getElementById("reset-invoice-settings");
+const glSortControl = document.getElementById("gl-sort-control");
+const itemSortControl = document.getElementById("item-sort-control");
+const namedItemsFirstControl = document.getElementById("named-items-first-control");
 let profilePreferences = { ...DEFAULT_PROFILE_PREFERENCES };
+let invoiceSettings = { ...DEFAULT_INVOICE_SETTINGS };
 
 targetInput.forEach((input) => {
   input.addEventListener("focus", function () {
@@ -372,6 +391,108 @@ function updateProfilePreferences(nextPreferences) {
   saveProfilePreferences();
 }
 
+function getStoredInvoiceSettings() {
+  if (!canUseLocalStorage()) {
+    return { ...DEFAULT_INVOICE_SETTINGS };
+  }
+
+  try {
+    const savedSettings = JSON.parse(localStorage.getItem(INVOICE_SETTINGS_KEY));
+
+    return {
+      displayMode: savedSettings?.displayMode === "dark" ? "dark" : DEFAULT_INVOICE_SETTINGS.displayMode,
+      showTaxDetails: typeof savedSettings?.showTaxDetails === "boolean"
+        ? savedSettings.showTaxDetails
+        : DEFAULT_INVOICE_SETTINGS.showTaxDetails,
+      glSort: ["default", "high-low", "low-high"].includes(savedSettings?.glSort)
+        ? savedSettings.glSort
+        : DEFAULT_INVOICE_SETTINGS.glSort,
+      itemSort: ["default", "high-low", "low-high"].includes(savedSettings?.itemSort)
+        ? savedSettings.itemSort
+        : DEFAULT_INVOICE_SETTINGS.itemSort,
+      namedItemsFirst: Boolean(savedSettings?.namedItemsFirst),
+    };
+  } catch (error) {
+    return { ...DEFAULT_INVOICE_SETTINGS };
+  }
+}
+
+function saveInvoiceSettings() {
+  if (!canUseLocalStorage()) {
+    invoiceSettingStatus.innerText = "Changes apply for this page only.";
+    return;
+  }
+
+  try {
+    localStorage.setItem(INVOICE_SETTINGS_KEY, JSON.stringify(invoiceSettings));
+    invoiceSettingStatus.innerText = "Saved in this browser.";
+  } catch (error) {
+    invoiceSettingStatus.innerText = "Changes apply for this page only.";
+  }
+}
+
+function applyInvoiceSettings() {
+  document.body.dataset.displayMode = invoiceSettings.displayMode;
+  displayModeSetting.value = invoiceSettings.displayMode;
+  taxDetailSetting.checked = invoiceSettings.showTaxDetails;
+  glSortSetting.value = invoiceSettings.glSort;
+  itemSortSetting.value = invoiceSettings.itemSort;
+  namedItemsFirstSetting.checked = invoiceSettings.namedItemsFirst;
+  glSortControl.value = invoiceSettings.glSort;
+  itemSortControl.value = invoiceSettings.itemSort;
+  namedItemsFirstControl.checked = invoiceSettings.namedItemsFirst;
+}
+
+function updateInvoiceSettings(nextSettings) {
+  invoiceSettings = {
+    ...invoiceSettings,
+    ...nextSettings,
+  };
+
+  applyInvoiceSettings();
+  saveInvoiceSettings();
+  renderInvoice();
+}
+
+function sortGlDetails(glDetails) {
+  const sortedGlDetails = [...glDetails];
+
+  if (invoiceSettings.glSort === "high-low") {
+    sortedGlDetails.sort((firstGl, secondGl) => secondGl.glAfterTaxCents - firstGl.glAfterTaxCents);
+  }
+
+  if (invoiceSettings.glSort === "low-high") {
+    sortedGlDetails.sort((firstGl, secondGl) => firstGl.glAfterTaxCents - secondGl.glAfterTaxCents);
+  }
+
+  return sortedGlDetails;
+}
+
+function getSortedItemsForGl(glNumber) {
+  const itemsForGl = list.filter((item) => item.itemGL === glNumber);
+
+  return itemsForGl.sort((firstItem, secondItem) => {
+    if (invoiceSettings.namedItemsFirst) {
+      const firstHasName = firstItem.itemName.trim() !== "";
+      const secondHasName = secondItem.itemName.trim() !== "";
+
+      if (firstHasName !== secondHasName) {
+        return firstHasName ? -1 : 1;
+      }
+    }
+
+    if (invoiceSettings.itemSort === "high-low") {
+      return toCents(secondItem.itemCost) - toCents(firstItem.itemCost);
+    }
+
+    if (invoiceSettings.itemSort === "low-high") {
+      return toCents(firstItem.itemCost) - toCents(secondItem.itemCost);
+    }
+
+    return firstItem.itemId - secondItem.itemId;
+  });
+}
+
 function createInvoiceItem({ itemGL, itemType, itemName, itemCost }) {
   const nextItemId = itemIdNum;
   const newItem = {
@@ -417,14 +538,16 @@ function renderInvoice() {
   document.getElementById("subtotal").innerText = formatCents(subTotalCents);
   document.getElementById("tax").innerText = formatCents(taxCents);
   document.getElementById("adjustment-note").innerText = getSmallDifferenceNotice(taxCents);
+  document.getElementById("tax").closest("p").hidden = !invoiceSettings.showTaxDetails;
+  document.getElementById("adjustment-note").hidden = !invoiceSettings.showTaxDetails;
 
   const glTable = document.querySelector("#gl-table");
   glTable.style.cssText = "width: 100%;";
 
-  const glDetails = distributeTaxByGl({
+  const glDetails = sortGlDetails(distributeTaxByGl({
     invoiceTotal: total,
     items: list,
-  });
+  }));
 
   glDetails.forEach((gl) => {
     const glRow = document.createElement("tr");
@@ -472,56 +595,61 @@ function renderInvoice() {
     bookmarkBox.appendChild(glBookmark);
     glRow.appendChild(glNumberCell);
     glRow.appendChild(glSubtotalCell);
-    glRow.appendChild(glTaxCell);
+    if (invoiceSettings.showTaxDetails) {
+      glRow.appendChild(glTaxCell);
+    }
+
     glRow.appendChild(glTotalCell);
     glDivider.appendChild(glRow);
     glDivider.appendChild(itemBox);
     glTable.appendChild(glDivider);
   });
 
-  list.forEach((item) => {
-    const targetItemBox = document.querySelector(`div[data-glItemBox='${item.itemGL}']`);
+  glDetails.forEach((gl) => {
+    getSortedItemsForGl(gl.glNumber).forEach((item) => {
+      const targetItemBox = document.querySelector(`div[data-glItemBox='${item.itemGL}']`);
 
-    const listItem = document.createElement("tr");
-    listItem.style.cssText = "margin-bottom: 5px; display: flex;";
-    listItem.classList.add(`${item.itemGL}`);
+      const listItem = document.createElement("tr");
+      listItem.style.cssText = "margin-bottom: 5px; display: flex;";
+      listItem.classList.add(`${item.itemGL}`);
 
-    const listItemGL = document.createElement("td");
-    listItemGL.innerText = `Item GL: ${item.itemGL}`;
+      const listItemGL = document.createElement("td");
+      listItemGL.innerText = `Item GL: ${item.itemGL}`;
 
-    const listItemCost = document.createElement("td");
-    listItemCost.innerText = `Item Cost: ${item.itemCost}`;
+      const listItemCost = document.createElement("td");
+      listItemCost.innerText = `Item Cost: ${item.itemCost}`;
 
-    const listItemType = document.createElement("td");
-    listItemType.innerText = `Line Type: ${item.itemType === "refund" ? "Refund" : "Purchase"}`;
+      const listItemType = document.createElement("td");
+      listItemType.innerText = `Line Type: ${item.itemType === "refund" ? "Refund" : "Purchase"}`;
 
-    const listItemName = document.createElement("td");
-    listItemName.innerText = `Item Name: ${item.itemName}`;
+      const listItemName = document.createElement("td");
+      listItemName.innerText = `Item Name: ${item.itemName}`;
 
-    const listItemId = document.createElement("td");
-    listItemId.innerText = `Item ID: ${item.itemId}`;
+      const listItemId = document.createElement("td");
+      listItemId.innerText = `Item ID: ${item.itemId}`;
 
-    const listItemX = document.createElement("td");
-    listItemX.style.cssText = "flex-grow: -1;";
-    listItemX.classList.add("xBtnContainer");
+      const listItemX = document.createElement("td");
+      listItemX.style.cssText = "flex-grow: -1;";
+      listItemX.classList.add("xBtnContainer");
 
-    const xBtn = document.createElement("button");
-    xBtn.id = `xBtn-${item.btnId}`;
-    xBtn.setAttribute("tabindex", "-1");
-    xBtn.classList.add("delBtn");
-    xBtn.dataset.targetBtn = `${item.btnId}`;
-    xBtn.innerText = "x";
-    xBtn.addEventListener("click", removeInvoiceItem);
+      const xBtn = document.createElement("button");
+      xBtn.id = `xBtn-${item.btnId}`;
+      xBtn.setAttribute("tabindex", "-1");
+      xBtn.classList.add("delBtn");
+      xBtn.dataset.targetBtn = `${item.btnId}`;
+      xBtn.innerText = "x";
+      xBtn.addEventListener("click", removeInvoiceItem);
 
-    listItemX.appendChild(xBtn);
-    listItem.appendChild(listItemGL);
-    listItem.appendChild(listItemType);
-    listItem.appendChild(listItemCost);
-    listItem.appendChild(listItemName);
-    listItem.appendChild(listItemId);
-    listItem.appendChild(listItemX);
+      listItemX.appendChild(xBtn);
+      listItem.appendChild(listItemGL);
+      listItem.appendChild(listItemType);
+      listItem.appendChild(listItemCost);
+      listItem.appendChild(listItemName);
+      listItem.appendChild(listItemId);
+      listItem.appendChild(listItemX);
 
-    targetItemBox.appendChild(listItem);
+      targetItemBox.appendChild(listItem);
+    });
   });
 }
 
@@ -725,10 +853,62 @@ resetProfilePreferencesButton.addEventListener("click", function () {
   profilePreferenceStatus.innerText = wasResetSaved ? "Profile reset." : "Changes apply for this page only.";
 });
 
+displayModeSetting.addEventListener("change", function () {
+  updateInvoiceSettings({ displayMode: displayModeSetting.value });
+});
+
+taxDetailSetting.addEventListener("change", function () {
+  updateInvoiceSettings({ showTaxDetails: taxDetailSetting.checked });
+});
+
+glSortSetting.addEventListener("change", function () {
+  updateInvoiceSettings({ glSort: glSortSetting.value });
+});
+
+itemSortSetting.addEventListener("change", function () {
+  updateInvoiceSettings({ itemSort: itemSortSetting.value });
+});
+
+namedItemsFirstSetting.addEventListener("change", function () {
+  updateInvoiceSettings({ namedItemsFirst: namedItemsFirstSetting.checked });
+});
+
+glSortControl.addEventListener("change", function () {
+  updateInvoiceSettings({ glSort: glSortControl.value });
+});
+
+itemSortControl.addEventListener("change", function () {
+  updateInvoiceSettings({ itemSort: itemSortControl.value });
+});
+
+namedItemsFirstControl.addEventListener("change", function () {
+  updateInvoiceSettings({ namedItemsFirst: namedItemsFirstControl.checked });
+});
+
+resetInvoiceSettingsButton.addEventListener("click", function () {
+  const shouldResetSettings = window.confirm("Are you sure you want to reset your invoice settings?");
+
+  if (!shouldResetSettings) {
+    return;
+  }
+
+  invoiceSettings = { ...DEFAULT_INVOICE_SETTINGS };
+
+  if (canUseLocalStorage()) {
+    localStorage.removeItem(INVOICE_SETTINGS_KEY);
+  }
+
+  applyInvoiceSettings();
+  invoiceSettingStatus.innerText = "Settings reset.";
+  renderInvoice();
+});
+
 menuBackdrop.addEventListener("click", closeToolbarMenu);
 searchBtn.addEventListener("click", searchList);
 loadDemoButton.addEventListener("click", loadDemoInvoice);
 resetInvoiceButton.addEventListener("click", resetInvoice);
 profilePreferences = getStoredProfilePreferences();
 applyProfilePreferences();
+invoiceSettings = getStoredInvoiceSettings();
+applyInvoiceSettings();
 renderCapabilityStatuses();

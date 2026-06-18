@@ -61,7 +61,47 @@
 
           <section class="toolbarPanel" data-panel="settings">
             <h2>Settings</h2>
-            <p>Invoice display and behavior settings will appear here.</p>
+            <div class="invoiceSettings" aria-label="Invoice settings">
+              <label class="preferenceField" for="display-mode-setting">
+                <span>Display mode</span>
+                <select id="display-mode-setting">
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </label>
+
+              <label class="settingCheck">
+                <input id="tax-detail-setting" type="checkbox" checked>
+                <span>Show tax detail</span>
+              </label>
+
+              <label class="preferenceField" for="gl-sort-setting">
+                <span>GL group order</span>
+                <select id="gl-sort-setting">
+                  <option value="default">Entry order</option>
+                  <option value="high-low">Total high to low</option>
+                  <option value="low-high">Total low to high</option>
+                </select>
+              </label>
+
+              <label class="preferenceField" for="item-sort-setting">
+                <span>Item order</span>
+                <select id="item-sort-setting">
+                  <option value="default">Entry order</option>
+                  <option value="high-low">Price high to low</option>
+                  <option value="low-high">Price low to high</option>
+                </select>
+              </label>
+
+              <label class="settingCheck">
+                <input id="named-items-first-setting" type="checkbox">
+                <span>Named items first</span>
+              </label>
+
+              <p id="invoice-setting-status" class="preferenceStatus" aria-live="polite"></p>
+              <button id="reset-invoice-settings" class="panelActionButton" type="button">Reset Settings</button>
+            </div>
+
             <div class="capabilityStatus" aria-label="Browser capability status">
               <h3>Browser support</h3>
               <ul>
@@ -143,7 +183,33 @@
           </section>
 
           <section class="detailsBorder" aria-label="GL details">
-            <div class="detailsAccent">GL Details</div>
+            <div class="detailsHeader">
+              <h2 class="detailsAccent">GL Details</h2>
+              <div class="detailsTools" aria-label="GL organization controls">
+                <label for="gl-sort-control">
+                  <span>GL</span>
+                  <select id="gl-sort-control">
+                    <option value="default">Entry</option>
+                    <option value="high-low">High-Low</option>
+                    <option value="low-high">Low-High</option>
+                  </select>
+                </label>
+
+                <label for="item-sort-control">
+                  <span>Items</span>
+                  <select id="item-sort-control">
+                    <option value="default">Entry</option>
+                    <option value="high-low">High-Low</option>
+                    <option value="low-high">Low-High</option>
+                  </select>
+                </label>
+
+                <label class="detailsToggle">
+                  <input id="named-items-first-control" type="checkbox">
+                  <span>Named first</span>
+                </label>
+              </div>
+            </div>
             <div id="detailsContentContainer">
               <aside id="bookmarkList" aria-label="GL bookmarks">
                 <ul id="marksExtra"></ul>
