@@ -42,6 +42,7 @@ const DEFAULT_PROFILE_PREFERENCES = {
   textSize: "standard",
 };
 const INVOICE_SETTINGS_KEY = "invoice-tax-distribution-invoice-settings";
+const SHORTCUTS_KEY = "invoice-tax-distribution-shortcuts";
 const DEFAULT_INVOICE_SETTINGS = {
   displayMode: "light",
   showTaxDetails: true,
@@ -108,10 +109,14 @@ const {
 
 const targetInput = document.querySelectorAll("input");
 const focusTotal = document.querySelector("#inputTotal");
+const itemGlInput = document.getElementById("inputGl");
+const itemNameInput = document.getElementById("inputName");
 const searchValue = document.getElementById("inputSearch");
 const searchBtn = document.querySelector(".searchBtn");
 const loadDemoButton = document.getElementById("load-demo-button");
 const resetInvoiceButton = document.getElementById("reset-invoice-button");
+const invoiceActionPanel = document.getElementById("invoice-action-panel");
+const invoiceActionToggle = document.getElementById("invoice-action-toggle");
 const toolbarMenuButtons = document.querySelectorAll(".toolbarMenuButton");
 const toolbarDropdown = document.getElementById("toolbar-dropdown");
 const menuBackdrop = document.getElementById("menu-backdrop");
@@ -134,11 +139,24 @@ const itemSortSetting = document.getElementById("item-sort-setting");
 const namedItemsFirstSetting = document.getElementById("named-items-first-setting");
 const invoiceSettingStatus = document.getElementById("invoice-setting-status");
 const resetInvoiceSettingsButton = document.getElementById("reset-invoice-settings");
+const glShortcutKeyInput = document.getElementById("gl-shortcut-key");
+const glShortcutNumberInput = document.getElementById("gl-shortcut-number");
+const addGlShortcutButton = document.getElementById("add-gl-shortcut-button");
+const glShortcutList = document.getElementById("gl-shortcut-list");
+const itemNameShortcutInput = document.getElementById("item-name-shortcut");
+const addItemNameShortcutButton = document.getElementById("add-item-name-shortcut-button");
+const itemNameShortcutList = document.getElementById("item-name-shortcut-list");
+const itemNameSuggestion = document.getElementById("item-name-suggestion");
+const shortcutStatus = document.getElementById("shortcut-status");
 const glSortControl = document.getElementById("gl-sort-control");
 const itemSortControl = document.getElementById("item-sort-control");
 const namedItemsFirstControl = document.getElementById("named-items-first-control");
 let profilePreferences = { ...DEFAULT_PROFILE_PREFERENCES };
 let invoiceSettings = { ...DEFAULT_INVOICE_SETTINGS };
+let shortcuts = {
+  gl: [],
+  itemNames: [],
+};
 
 targetInput.forEach((input) => {
   input.addEventListener("focus", function () {
@@ -181,6 +199,14 @@ function closeToolbarMenu() {
   toolbarPanels.forEach((panel) => {
     panel.classList.remove("isActive");
   });
+}
+
+function toggleInvoiceActionPanel() {
+  const shouldOpen = !invoiceActionPanel.classList.contains("isOpen");
+
+  invoiceActionPanel.classList.toggle("isOpen", shouldOpen);
+  invoiceActionToggle.setAttribute("aria-expanded", String(shouldOpen));
+  invoiceActionToggle.setAttribute("aria-label", shouldOpen ? "Close invoice actions" : "Open invoice actions");
 }
 
 function canUseLocalStorage() {
@@ -454,6 +480,265 @@ function updateInvoiceSettings(nextSettings) {
   renderInvoice();
 }
 
+function normalizeShortcutText(value) {
+  return String(value || "").trim();
+}
+
+function getShortcutMatchValue(value) {
+  return normalizeShortcutText(value).toLowerCase();
+}
+
+function normalizeStoredGlShortcuts(savedShortcuts) {
+  if (!Array.isArray(savedShortcuts)) {
+    return [];
+  }
+
+  return savedShortcuts
+    .map((shortcut) => ({
+      shortcut: normalizeShortcutText(shortcut?.shortcut || shortcut?.label).slice(0, 12),
+      glNumber: normalizeShortcutText(shortcut?.glNumber).slice(0, 12),
+    }))
+    .filter((shortcut) => shortcut.shortcut && shortcut.glNumber);
+}
+
+function normalizeStoredItemNameShortcuts(savedShortcuts) {
+  if (!Array.isArray(savedShortcuts)) {
+    return [];
+  }
+
+  return savedShortcuts
+    .map((shortcut) => normalizeShortcutText(shortcut).slice(0, 40))
+    .filter(Boolean);
+}
+
+function getStoredShortcuts() {
+  if (!canUseLocalStorage()) {
+    return {
+      gl: [],
+      itemNames: [],
+    };
+  }
+
+  try {
+    const savedShortcuts = JSON.parse(localStorage.getItem(SHORTCUTS_KEY));
+
+    if (Array.isArray(savedShortcuts)) {
+      return {
+        gl: normalizeStoredGlShortcuts(savedShortcuts),
+        itemNames: [],
+      };
+    }
+
+    return {
+      gl: normalizeStoredGlShortcuts(savedShortcuts?.gl),
+      itemNames: normalizeStoredItemNameShortcuts(savedShortcuts?.itemNames),
+    };
+  } catch (error) {
+    return {
+      gl: [],
+      itemNames: [],
+    };
+  }
+}
+
+function saveShortcuts() {
+  if (!canUseLocalStorage()) {
+    shortcutStatus.innerText = "Shortcuts apply for this page only.";
+    return;
+  }
+
+  try {
+    localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(shortcuts));
+    shortcutStatus.innerText = "Shortcuts saved in this browser.";
+  } catch (error) {
+    shortcutStatus.innerText = "Shortcuts apply for this page only.";
+  }
+}
+
+function resolveGlShortcut(value) {
+  const matchValue = getShortcutMatchValue(value);
+  const match = shortcuts.gl.find((shortcut) => getShortcutMatchValue(shortcut.shortcut) === matchValue);
+
+  return match ? match.glNumber : value;
+}
+
+function applyGlShortcutToInput() {
+  const resolvedGlNumber = resolveGlShortcut(itemGlInput.value);
+
+  if (resolvedGlNumber === itemGlInput.value) {
+    return;
+  }
+
+  itemGlInput.value = resolvedGlNumber;
+}
+
+function removeGlShortcut(index) {
+  shortcuts.gl.splice(index, 1);
+  saveShortcuts();
+  renderShortcuts();
+}
+
+function removeItemNameShortcut(index) {
+  shortcuts.itemNames.splice(index, 1);
+  saveShortcuts();
+  renderShortcuts();
+  updateItemNameSuggestion();
+}
+
+function renderEmptyShortcut(listElement, message) {
+  const emptyShortcut = document.createElement("li");
+  emptyShortcut.classList.add("emptyShortcut");
+  emptyShortcut.innerText = message;
+  listElement.appendChild(emptyShortcut);
+}
+
+function renderShortcuts() {
+  glShortcutList.innerHTML = "";
+  itemNameShortcutList.innerHTML = "";
+
+  if (shortcuts.gl.length === 0) {
+    renderEmptyShortcut(glShortcutList, "No GL shortcuts saved yet.");
+  }
+
+  shortcuts.gl.forEach((shortcut, index) => {
+    const shortcutItem = document.createElement("li");
+
+    const shortcutName = document.createElement("div");
+    shortcutName.classList.add("shortcutName");
+
+    const shortcutLabel = document.createElement("strong");
+    shortcutLabel.innerText = `${shortcut.shortcut} = ${shortcut.glNumber}`;
+
+    const shortcutDetail = document.createElement("span");
+    shortcutDetail.innerText = "GL shortcut";
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.innerText = "Delete";
+    removeButton.addEventListener("click", function () {
+      removeGlShortcut(index);
+    });
+
+    shortcutName.appendChild(shortcutLabel);
+    shortcutName.appendChild(shortcutDetail);
+    shortcutItem.appendChild(shortcutName);
+    shortcutItem.appendChild(removeButton);
+    glShortcutList.appendChild(shortcutItem);
+  });
+
+  if (shortcuts.itemNames.length === 0) {
+    renderEmptyShortcut(itemNameShortcutList, "No item name shortcuts saved yet.");
+  }
+
+  shortcuts.itemNames.forEach((shortcut, index) => {
+    const shortcutItem = document.createElement("li");
+
+    const shortcutName = document.createElement("div");
+    shortcutName.classList.add("shortcutName");
+
+    const shortcutLabel = document.createElement("strong");
+    shortcutLabel.innerText = shortcut;
+
+    const shortcutDetail = document.createElement("span");
+    shortcutDetail.innerText = "Item name autocomplete";
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.innerText = "Delete";
+    removeButton.addEventListener("click", function () {
+      removeItemNameShortcut(index);
+    });
+
+    shortcutName.appendChild(shortcutLabel);
+    shortcutName.appendChild(shortcutDetail);
+    shortcutItem.appendChild(shortcutName);
+    shortcutItem.appendChild(removeButton);
+    itemNameShortcutList.appendChild(shortcutItem);
+  });
+}
+
+function addGlShortcut() {
+  const shortcut = normalizeShortcutText(glShortcutKeyInput.value).slice(0, 12);
+  const glNumber = normalizeShortcutText(glShortcutNumberInput.value).slice(0, 12);
+
+  if (!shortcut || !glNumber) {
+    shortcutStatus.innerText = "Enter a shortcut and GL number.";
+    return;
+  }
+
+  const existingShortcutIndex = shortcuts.gl.findIndex((savedShortcut) => (
+    getShortcutMatchValue(savedShortcut.shortcut) === getShortcutMatchValue(shortcut)
+  ));
+  const nextShortcut = { shortcut, glNumber };
+
+  if (existingShortcutIndex === -1) {
+    shortcuts.gl.push(nextShortcut);
+  } else {
+    shortcuts.gl[existingShortcutIndex] = nextShortcut;
+  }
+
+  glShortcutKeyInput.value = "";
+  glShortcutNumberInput.value = "";
+  saveShortcuts();
+  renderShortcuts();
+}
+
+function addItemNameShortcut() {
+  const shortcut = normalizeShortcutText(itemNameShortcutInput.value).slice(0, 40);
+
+  if (!shortcut) {
+    shortcutStatus.innerText = "Enter an item name shortcut.";
+    return;
+  }
+
+  const existingShortcutIndex = shortcuts.itemNames.findIndex((savedShortcut) => (
+    getShortcutMatchValue(savedShortcut) === getShortcutMatchValue(shortcut)
+  ));
+
+  if (existingShortcutIndex === -1) {
+    shortcuts.itemNames.push(shortcut);
+  } else {
+    shortcuts.itemNames[existingShortcutIndex] = shortcut;
+  }
+
+  itemNameShortcutInput.value = "";
+  saveShortcuts();
+  renderShortcuts();
+  updateItemNameSuggestion();
+}
+
+function getItemNameSuggestion(value) {
+  const typedValue = normalizeShortcutText(value);
+
+  if (!typedValue) {
+    return "";
+  }
+
+  const matchValue = getShortcutMatchValue(typedValue);
+  const match = shortcuts.itemNames.find((shortcut) => (
+    getShortcutMatchValue(shortcut).startsWith(matchValue) &&
+    getShortcutMatchValue(shortcut) !== matchValue
+  ));
+
+  return match || "";
+}
+
+function updateItemNameSuggestion() {
+  itemNameSuggestion.innerText = getItemNameSuggestion(itemNameInput.value);
+}
+
+function acceptItemNameSuggestion() {
+  const suggestion = getItemNameSuggestion(itemNameInput.value);
+
+  if (!suggestion) {
+    return false;
+  }
+
+  itemNameInput.value = suggestion;
+  updateItemNameSuggestion();
+  return true;
+}
+
 function sortGlDetails(glDetails) {
   const sortedGlDetails = [...glDetails];
 
@@ -676,9 +961,12 @@ function reindexInvoiceItems() {
 
 function addNewGl() {
   const total = document.getElementById("inputTotal").value;
+  const costFocus = document.getElementById("inputCost");
+
+  applyGlShortcutToInput();
   const validation = validateInvoiceEntry({
     invoiceTotal: total,
-    itemGL: document.getElementById("inputGl").value,
+    itemGL: itemGlInput.value,
     itemCost: document.getElementById("inputCost").value,
     itemType: document.getElementById("inputType").value,
     existingItems: list,
@@ -692,13 +980,15 @@ function addNewGl() {
   list.push(createInvoiceItem({
     itemGL: validation.glNumber,
     itemType: validation.itemType,
-    itemName: document.getElementById("inputName").value,
+    itemName: itemNameInput.value,
     itemCost: validation.itemCost,
   }));
 
   renderInvoice();
 
-  const costFocus = document.getElementById("inputCost");
+  itemNameInput.value = "";
+  updateItemNameSuggestion();
+
   costFocus.addEventListener("focus", function () {
     this.select();
   });
@@ -710,9 +1000,10 @@ function addNewGl() {
 function loadDemoInvoice() {
   document.getElementById("inputTotal").value = DEMO_INVOICE_TOTAL;
   document.getElementById("inputType").value = "purchase";
-  document.getElementById("inputGl").value = "";
+  itemGlInput.value = "";
   document.getElementById("inputCost").value = "";
-  document.getElementById("inputName").value = "";
+  itemNameInput.value = "";
+  updateItemNameSuggestion();
   searchValue.value = "";
   document.querySelector(".resultsContainer").innerText = "Search Results";
 
@@ -727,9 +1018,10 @@ function resetInvoice() {
   itemIdNum = 1;
   document.getElementById("inputTotal").value = "";
   document.getElementById("inputType").value = "purchase";
-  document.getElementById("inputGl").value = "";
+  itemGlInput.value = "";
   document.getElementById("inputCost").value = "";
-  document.getElementById("inputName").value = "";
+  itemNameInput.value = "";
+  updateItemNameSuggestion();
   searchValue.value = "";
   document.querySelector(".resultsContainer").innerText = "Search Results";
   resetRenderedInvoice();
@@ -904,11 +1196,55 @@ resetInvoiceSettingsButton.addEventListener("click", function () {
 });
 
 menuBackdrop.addEventListener("click", closeToolbarMenu);
+invoiceActionToggle.addEventListener("click", toggleInvoiceActionPanel);
 searchBtn.addEventListener("click", searchList);
+addGlShortcutButton.addEventListener("click", addGlShortcut);
+[glShortcutKeyInput, glShortcutNumberInput].forEach((input) => {
+  input.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addGlShortcut();
+    }
+  });
+});
+addItemNameShortcutButton.addEventListener("click", addItemNameShortcut);
+itemNameShortcutInput.addEventListener("keydown", function (event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    addItemNameShortcut();
+  }
+});
+itemGlInput.addEventListener("change", applyGlShortcutToInput);
+itemNameInput.addEventListener("input", updateItemNameSuggestion);
+itemNameInput.addEventListener("focus", updateItemNameSuggestion);
+itemNameInput.addEventListener("blur", function () {
+  window.setTimeout(updateItemNameSuggestion, 0);
+});
+itemNameInput.addEventListener("keydown", function (event) {
+  if (event.key === "Tab") {
+    const wasSuggestionAccepted = acceptItemNameSuggestion();
+
+    if (wasSuggestionAccepted) {
+      event.preventDefault();
+      addNewGl();
+    }
+  }
+});
 loadDemoButton.addEventListener("click", loadDemoInvoice);
-resetInvoiceButton.addEventListener("click", resetInvoice);
+resetInvoiceButton.addEventListener("click", function () {
+  const shouldResetInvoice = window.confirm("Are you sure you want to reset this invoice?");
+
+  if (!shouldResetInvoice) {
+    return;
+  }
+
+  resetInvoice();
+});
 profilePreferences = getStoredProfilePreferences();
 applyProfilePreferences();
 invoiceSettings = getStoredInvoiceSettings();
 applyInvoiceSettings();
+shortcuts = getStoredShortcuts();
+renderShortcuts();
+updateItemNameSuggestion();
 renderCapabilityStatuses();

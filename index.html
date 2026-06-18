@@ -123,7 +123,36 @@
 
           <section class="toolbarPanel" data-panel="shortcuts">
             <h2>Shortcuts</h2>
-            <p>GL shortcut mappings will appear here.</p>
+            <div class="shortcutSettings" aria-label="Shortcut mappings">
+              <fieldset class="shortcutGroup">
+                <legend>GL number shortcuts</legend>
+                <label class="preferenceField" for="gl-shortcut-key">
+                  <span>Shortcut</span>
+                  <input id="gl-shortcut-key" type="text" maxlength="12" placeholder="n">
+                </label>
+
+                <label class="preferenceField" for="gl-shortcut-number">
+                  <span>GL number</span>
+                  <input id="gl-shortcut-number" type="text" maxlength="12" placeholder="6100">
+                </label>
+
+                <button id="add-gl-shortcut-button" class="panelActionButton" type="button">Save GL Shortcut</button>
+                <ul id="gl-shortcut-list" class="shortcutList" aria-label="Saved GL shortcuts"></ul>
+              </fieldset>
+
+              <fieldset class="shortcutGroup">
+                <legend>Item name shortcuts</legend>
+                <label class="preferenceField" for="item-name-shortcut">
+                  <span>Item name</span>
+                  <input id="item-name-shortcut" type="text" maxlength="40" placeholder="Briefs">
+                </label>
+
+                <button id="add-item-name-shortcut-button" class="panelActionButton" type="button">Save Name Shortcut</button>
+                <ul id="item-name-shortcut-list" class="shortcutList" aria-label="Saved item name shortcuts"></ul>
+              </fieldset>
+
+              <p id="shortcut-status" class="preferenceStatus" aria-live="polite"></p>
+            </div>
           </section>
         </aside>
 
@@ -141,9 +170,18 @@
               <p><strong>Net Item Subtotal:</strong> <span id="subtotal"></span></p>
               <p><strong>Tax / Difference:</strong> <span id="tax"></span></p>
               <p id="adjustment-note" class="adjustmentNote"></p>
-              <div class="demoActions" aria-label="Demo invoice controls">
-                <button id="load-demo-button" type="button">Load Demo Invoice</button>
-                <button id="reset-invoice-button" type="button">Reset Invoice</button>
+              <div class="invoiceActionDock">
+                <aside id="invoice-action-panel" class="invoiceActionPanel" aria-label="Invoice actions">
+                  <button id="invoice-action-toggle" class="invoiceActionToggle" type="button" aria-label="Open invoice actions" aria-controls="invoice-action-panel" aria-expanded="false">
+                    <span aria-hidden="true">›</span>
+                  </button>
+
+                  <div class="invoiceActionContent">
+                    <h2>Invoice Actions</h2>
+                    <button id="reset-invoice-button" type="button">Reset Invoice</button>
+                    <button id="load-demo-button" type="button">Load Demo</button>
+                  </div>
+                </aside>
               </div>
             </div>
 
@@ -178,7 +216,10 @@
 
             <div class="entryField">
               <label for="inputName">Enter Item Name: <span>(Optional)</span></label>
-              <input type="text" id="inputName">
+              <div class="autocompleteField">
+                <span id="item-name-suggestion" class="itemNameSuggestion" aria-hidden="true"></span>
+                <input type="text" id="inputName" autocomplete="off">
+              </div>
             </div>
           </section>
 
