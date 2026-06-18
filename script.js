@@ -34,6 +34,57 @@ const DEMO_INVOICE_ITEMS = [
     itemCost: "37.40",
   },
 ];
+const PROFILE_PREFERENCES_KEY = "invoice-tax-distribution-profile-preferences";
+const DEFAULT_PROFILE_PREFERENCES = {
+  accent: "blue",
+  customAccent: "",
+  density: "comfortable",
+  textSize: "standard",
+};
+const ACCENT_THEMES = {
+  blue: {
+    accent: "#579fda",
+    border: "#3b78ae",
+    active: "#3f86c2",
+    soft: "#a7c8dc",
+    muted: "#98b5c5",
+  },
+  green: {
+    accent: "#4f9b6f",
+    border: "#347553",
+    active: "#3f835e",
+    soft: "#b7dac5",
+    muted: "#93bd9f",
+  },
+  teal: {
+    accent: "#3f9f9a",
+    border: "#2e7774",
+    active: "#348682",
+    soft: "#aad8d5",
+    muted: "#86bfbc",
+  },
+  steel: {
+    accent: "#6f8397",
+    border: "#4d6378",
+    active: "#5d748a",
+    soft: "#c2ccd6",
+    muted: "#9aa7b4",
+  },
+  purple: {
+    accent: "#7a6fb0",
+    border: "#5d5389",
+    active: "#685e99",
+    soft: "#c7c1df",
+    muted: "#a59fc4",
+  },
+  red: {
+    accent: "#b45f5f",
+    border: "#874646",
+    active: "#9c5252",
+    soft: "#dfb9b9",
+    muted: "#c99797",
+  },
+};
 
 const {
   distributeTaxByGl,
@@ -62,6 +113,13 @@ const capabilityStatusElements = {
   invoices: document.getElementById("invoice-storage-status"),
   fileExport: document.getElementById("file-export-status"),
 };
+const accentSwatches = document.querySelectorAll(".accentSwatch");
+const customAccentColorInput = document.getElementById("custom-accent-color");
+const densityPreference = document.getElementById("density-preference");
+const textSizePreference = document.getElementById("text-size-preference");
+const profilePreferenceStatus = document.getElementById("profile-preference-status");
+const resetProfilePreferencesButton = document.getElementById("reset-profile-preferences");
+let profilePreferences = { ...DEFAULT_PROFILE_PREFERENCES };
 
 targetInput.forEach((input) => {
   input.addEventListener("focus", function () {
@@ -179,6 +237,139 @@ async function renderCapabilityStatuses() {
   updateCapabilityStatus(capabilityStatusElements.preferences, canUseLocalStorage());
   updateCapabilityStatus(capabilityStatusElements.fileExport, canExportFiles());
   updateCapabilityStatus(capabilityStatusElements.invoices, await canUseIndexedDb());
+}
+
+function normalizeHexColor(value) {
+  const trimmedValue = value.trim();
+  const match = trimmedValue.match(/^#?([a-f\d]{6})$/i);
+
+  return match ? `#${match[1].toLowerCase()}` : "";
+}
+
+function darkenHexColor(hexColor, percentage) {
+  const normalizedColor = normalizeHexColor(hexColor);
+
+  if (!normalizedColor) {
+    return "";
+  }
+
+  const amount = 1 - percentage;
+  const colorNumber = Number.parseInt(normalizedColor.slice(1), 16);
+  const red = Math.round(((colorNumber >> 16) & 255) * amount);
+  const green = Math.round(((colorNumber >> 8) & 255) * amount);
+  const blue = Math.round((colorNumber & 255) * amount);
+
+  return `#${[red, green, blue].map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function lightenHexColor(hexColor, percentage) {
+  const normalizedColor = normalizeHexColor(hexColor);
+
+  if (!normalizedColor) {
+    return "";
+  }
+
+  const colorNumber = Number.parseInt(normalizedColor.slice(1), 16);
+  const red = (colorNumber >> 16) & 255;
+  const green = (colorNumber >> 8) & 255;
+  const blue = colorNumber & 255;
+
+  return `#${[red, green, blue].map((channel) => {
+    const lightenedChannel = Math.round(channel + (255 - channel) * percentage);
+    return lightenedChannel.toString(16).padStart(2, "0");
+  }).join("")}`;
+}
+
+function getCustomAccentTheme(hexColor) {
+  const accent = normalizeHexColor(hexColor);
+
+  if (!accent) {
+    return null;
+  }
+
+  return {
+    accent,
+    border: darkenHexColor(accent, 0.28),
+    active: darkenHexColor(accent, 0.16),
+    soft: lightenHexColor(accent, 0.48),
+    muted: lightenHexColor(accent, 0.28),
+  };
+}
+
+function getStoredProfilePreferences() {
+  if (!canUseLocalStorage()) {
+    return { ...DEFAULT_PROFILE_PREFERENCES };
+  }
+
+  try {
+    const savedPreferences = JSON.parse(localStorage.getItem(PROFILE_PREFERENCES_KEY));
+    const savedCustomAccent = normalizeHexColor(savedPreferences?.customAccent || "");
+    const savedAccent = savedPreferences?.accent === "custom" && savedCustomAccent
+      ? "custom"
+      : savedPreferences?.accent;
+
+    return {
+      accent: ACCENT_THEMES[savedAccent] || savedAccent === "custom"
+        ? savedAccent
+        : DEFAULT_PROFILE_PREFERENCES.accent,
+      customAccent: savedCustomAccent,
+      density: savedPreferences?.density === "compact" ? "compact" : DEFAULT_PROFILE_PREFERENCES.density,
+      textSize: savedPreferences?.textSize === "large" ? "large" : DEFAULT_PROFILE_PREFERENCES.textSize,
+    };
+  } catch (error) {
+    return { ...DEFAULT_PROFILE_PREFERENCES };
+  }
+}
+
+function saveProfilePreferences() {
+  if (!canUseLocalStorage()) {
+    profilePreferenceStatus.innerText = "Changes apply for this page only.";
+    return;
+  }
+
+  try {
+    localStorage.setItem(PROFILE_PREFERENCES_KEY, JSON.stringify(profilePreferences));
+    profilePreferenceStatus.innerText = "Saved in this browser.";
+  } catch (error) {
+    profilePreferenceStatus.innerText = "Changes apply for this page only.";
+  }
+}
+
+function applyProfilePreferences() {
+  const customTheme = profilePreferences.accent === "custom"
+    ? getCustomAccentTheme(profilePreferences.customAccent)
+    : null;
+  const theme = customTheme || ACCENT_THEMES[profilePreferences.accent] || ACCENT_THEMES[DEFAULT_PROFILE_PREFERENCES.accent];
+  const root = document.documentElement;
+
+  root.style.setProperty("--app-accent", theme.accent);
+  root.style.setProperty("--app-accent-border", theme.border);
+  root.style.setProperty("--app-accent-active", theme.active);
+  root.style.setProperty("--app-accent-soft", theme.soft);
+  root.style.setProperty("--app-accent-muted", theme.muted);
+  root.style.setProperty("--toolbar-background", theme.accent);
+  root.style.setProperty("--toolbar-border", theme.border);
+  root.style.setProperty("--toolbar-active", theme.active);
+  document.body.dataset.density = profilePreferences.density;
+  document.body.dataset.textSize = profilePreferences.textSize;
+
+  accentSwatches.forEach((swatch) => {
+    swatch.setAttribute("aria-pressed", String(swatch.dataset.accentOption === profilePreferences.accent));
+  });
+
+  densityPreference.value = profilePreferences.density;
+  textSizePreference.value = profilePreferences.textSize;
+  customAccentColorInput.value = profilePreferences.customAccent;
+}
+
+function updateProfilePreferences(nextPreferences) {
+  profilePreferences = {
+    ...profilePreferences,
+    ...nextPreferences,
+  };
+
+  applyProfilePreferences();
+  saveProfilePreferences();
 }
 
 function createInvoiceItem({ itemGL, itemType, itemName, itemCost }) {
@@ -437,23 +628,23 @@ function searchList() {
   matchingItems.forEach((item) => {
       const glRow = document.createElement("tr");
       glRow.setAttribute("id", `gl-row${item.itemGL}`);
-      glRow.style.cssText = "display: flex; font-size: 20px; width: 1100px; color: black; border: ridge; border-width: 5px; border-radius: 5px; border-color: rgb(144, 164, 241);";
+      glRow.style.cssText = "display: flex; font-size: 20px; width: 1100px; color: black; border: ridge 5px var(--app-accent-muted); border-radius: 5px;";
 
       const itemGlCell = document.createElement("th");
       itemGlCell.innerText = `GL Number: ${item.itemGL}`;
-      itemGlCell.style.cssText = "background-color: rgb(206, 215, 250);";
+      itemGlCell.style.cssText = "background-color: var(--app-accent-soft);";
 
       const itemNameCell = document.createElement("th");
       itemNameCell.innerText = `Item Name: ${item.itemName}`;
-      itemNameCell.style.cssText = "background-color: rgb(206, 215, 250);";
+      itemNameCell.style.cssText = "background-color: var(--app-accent-soft);";
 
       const itemCostCell = document.createElement("th");
       itemCostCell.innerText = `Item cost: ${item.itemCost}`;
-      itemCostCell.style.cssText = "background-color: rgb(206, 215, 250);";
+      itemCostCell.style.cssText = "background-color: var(--app-accent-soft);";
 
       const itemIdCell = document.createElement("th");
       itemIdCell.innerText = `Item Id: ${item.itemId}`;
-      itemIdCell.style.cssText = "background-color: rgb(206, 215, 250);";
+      itemIdCell.style.cssText = "background-color: var(--app-accent-soft);";
 
       glRow.appendChild(itemGlCell);
       glRow.appendChild(itemNameCell);
@@ -480,8 +671,64 @@ toolbarDropdown.addEventListener("click", function (event) {
   event.stopPropagation();
 });
 
+accentSwatches.forEach((swatch) => {
+  swatch.addEventListener("click", function () {
+    updateProfilePreferences({
+      accent: swatch.dataset.accentOption,
+      customAccent: "",
+    });
+  });
+});
+
+customAccentColorInput.addEventListener("change", function () {
+  const customAccent = normalizeHexColor(customAccentColorInput.value);
+
+  if (!customAccent) {
+    profilePreferenceStatus.innerText = "Enter a color like #579fda.";
+    customAccentColorInput.value = profilePreferences.customAccent;
+    return;
+  }
+
+  updateProfilePreferences({
+    accent: "custom",
+    customAccent,
+  });
+});
+
+densityPreference.addEventListener("change", function () {
+  updateProfilePreferences({ density: densityPreference.value });
+});
+
+textSizePreference.addEventListener("change", function () {
+  updateProfilePreferences({ textSize: textSizePreference.value });
+});
+
+resetProfilePreferencesButton.addEventListener("click", function () {
+  const shouldResetProfile = window.confirm("Are you sure you want to reset your profile preferences?");
+
+  if (!shouldResetProfile) {
+    return;
+  }
+
+  profilePreferences = { ...DEFAULT_PROFILE_PREFERENCES };
+  let wasResetSaved = true;
+
+  if (canUseLocalStorage()) {
+    try {
+      localStorage.removeItem(PROFILE_PREFERENCES_KEY);
+    } catch (error) {
+      wasResetSaved = false;
+    }
+  }
+
+  applyProfilePreferences();
+  profilePreferenceStatus.innerText = wasResetSaved ? "Profile reset." : "Changes apply for this page only.";
+});
+
 menuBackdrop.addEventListener("click", closeToolbarMenu);
 searchBtn.addEventListener("click", searchList);
 loadDemoButton.addEventListener("click", loadDemoInvoice);
 resetInvoiceButton.addEventListener("click", resetInvoice);
+profilePreferences = getStoredProfilePreferences();
+applyProfilePreferences();
 renderCapabilityStatuses();

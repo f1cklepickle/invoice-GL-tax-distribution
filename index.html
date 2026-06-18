@@ -20,7 +20,43 @@
         <aside id="toolbar-dropdown" class="toolbarDropdown" aria-live="polite" hidden>
           <section class="toolbarPanel" data-panel="profile">
             <h2>Profile</h2>
-            <p>Local demo profile options will appear here.</p>
+            <div class="profilePreferences" aria-label="Profile preferences">
+              <fieldset class="preferenceGroup">
+                <legend>Accent color</legend>
+                <div class="accentSwatches" role="group" aria-label="Accent color">
+                  <button class="accentSwatch" type="button" data-accent-option="blue" style="--swatch-color: #579fda;" aria-label="Blue accent" aria-pressed="false"></button>
+                  <button class="accentSwatch" type="button" data-accent-option="green" style="--swatch-color: #4f9b6f;" aria-label="Green accent" aria-pressed="false"></button>
+                  <button class="accentSwatch" type="button" data-accent-option="teal" style="--swatch-color: #3f9f9a;" aria-label="Teal accent" aria-pressed="false"></button>
+                  <button class="accentSwatch" type="button" data-accent-option="steel" style="--swatch-color: #6f8397;" aria-label="Steel accent" aria-pressed="false"></button>
+                  <button class="accentSwatch" type="button" data-accent-option="purple" style="--swatch-color: #7a6fb0;" aria-label="Purple accent" aria-pressed="false"></button>
+                  <button class="accentSwatch" type="button" data-accent-option="red" style="--swatch-color: #b45f5f;" aria-label="Red accent" aria-pressed="false"></button>
+                </div>
+              </fieldset>
+
+              <label class="preferenceField" for="custom-accent-color">
+                <span>Custom hex color</span>
+                <input id="custom-accent-color" type="text" inputmode="text" placeholder="#579fda" maxlength="7">
+              </label>
+
+              <label class="preferenceField" for="density-preference">
+                <span>Layout density</span>
+                <select id="density-preference">
+                  <option value="comfortable">Comfortable</option>
+                  <option value="compact">Compact</option>
+                </select>
+              </label>
+
+              <label class="preferenceField" for="text-size-preference">
+                <span>Text size</span>
+                <select id="text-size-preference">
+                  <option value="standard">Standard</option>
+                  <option value="large">Large</option>
+                </select>
+              </label>
+
+              <p id="profile-preference-status" class="preferenceStatus" aria-live="polite"></p>
+              <button id="reset-profile-preferences" class="panelActionButton" type="button">Reset Profile</button>
+            </div>
           </section>
 
           <section class="toolbarPanel" data-panel="settings">
