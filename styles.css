@@ -3,6 +3,19 @@ html, body {
 }
 
 :root {
+  --app-accent: #579fda;
+  --app-accent-border: #3b78ae;
+  --app-accent-active: #3f86c2;
+  --app-accent-soft: #a7c8dc;
+  --app-accent-muted: #98b5c5;
+  --app-density-panel-padding: 8px;
+  --app-density-section-gap: 10px;
+  --app-density-input-height: 28px;
+  --app-density-button-height: 32px;
+  --app-density-results-height: 55px;
+  --app-density-item-min-height: 120px;
+  --app-density-item-max-height: 225px;
+  --app-text-size: 1rem;
   --toolbar-background: #579fda;
   --toolbar-border: #3b78ae;
   --toolbar-active: #3f86c2;
@@ -18,6 +31,7 @@ body {
   margin: 0 10px;
   background-color: #ffffff;
   color: #1f1f1f;
+  font-size: var(--app-text-size);
   line-height: 1.4;
   overflow: hidden;
 }
@@ -26,7 +40,7 @@ body {
   border-radius: 5px;
   max-width: 80%;
   min-height: 0;
-  border: ridge 5px rgb(152, 181, 197);
+  border: ridge 5px var(--app-accent-muted);
   background-color: rgb(212, 212, 212);
   overflow: auto;
   margin-left: 20px;
@@ -62,11 +76,11 @@ label {
 
 input, select {
   border-radius: 5px;
-  border: ridge 2px rgb(152, 181, 197);
+  border: ridge 2px var(--app-accent-muted);
   background-color: #f4f4f4;
   color: black;
   padding: 4px 6px;
-  min-height: 28px;
+  min-height: var(--app-density-input-height);
   box-sizing: border-box;
 }
 
@@ -213,18 +227,90 @@ main {
   color: #7f1d1d;
 }
 
+.profilePreferences {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.preferenceGroup {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.preferenceGroup legend,
+.preferenceField span {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.accentSwatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.accentSwatch {
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  border: solid 2px rgba(16, 35, 51, 0.35);
+  border-radius: 4px;
+  background-color: var(--swatch-color);
+  cursor: pointer;
+}
+
+.accentSwatch:hover,
+.accentSwatch[aria-pressed="true"] {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px var(--toolbar-border);
+}
+
+.preferenceField {
+  display: flex;
+  flex-direction: column;
+}
+
+.preferenceField select {
+  max-width: 180px;
+}
+
+.preferenceField input {
+  max-width: 180px;
+}
+
+.preferenceStatus {
+  min-height: 1.2em;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.panelActionButton {
+  align-self: flex-start;
+  border: outset;
+  border-radius: 5px;
+  border-color: var(--app-accent-border);
+  background-color: var(--app-accent-soft);
+  color: var(--toolbar-text);
+  min-height: 30px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
 .invoiceSearchContainer {
   display: flex;
   flex-direction: row;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: var(--app-density-section-gap);
 }
 
 .invoiceDetailsContainer {
   background-color: #d6d6d6;
-  min-height: 116px;
   width: 35%;
-  padding: 8px;
+  padding: var(--app-density-panel-padding);
   border: ridge;
   border-radius: 5px;
   box-sizing: border-box;
@@ -232,9 +318,8 @@ main {
 
 .searchBoxContainer {
   background-color: #d6d6d6;
-  min-height: 116px;
   width: 65%;
-  padding: 8px;
+  padding: var(--app-density-panel-padding);
   border: ridge;
   border-radius: 5px;
   box-sizing: border-box;
@@ -259,8 +344,8 @@ main {
   display: flex;
   flex-direction: row;
   gap: 12px;
-  margin: 10px 0;
-  padding: 10px;
+  margin: var(--app-density-section-gap) 0;
+  padding: var(--app-density-panel-padding);
   background-color: #f4f4f4;
   border: ridge;
   border-radius: 5px;
@@ -304,20 +389,20 @@ main {
   align-self: center;
   border: outset;
   border-radius: 5px;
-  border-color: #ffffff;
-  background-color: rgb(152, 181, 197);
+  border-color: var(--app-accent-border);
+  background-color: var(--app-accent-muted);
   color: #303030;
-  min-height: 32px;
+  min-height: var(--app-density-button-height);
   padding: 5px 12px;
   cursor: pointer;
 }
 
 #reset-invoice-button {
-  background-color: #d6d6d6;
+  background-color: var(--app-accent-soft);
 }
 
 .resultsContainer {
-  overflow: auto;
+  overflow: hidden;
   display: flex;
   flex-wrap: wrap;
   flex-grow: 0;
@@ -326,12 +411,12 @@ main {
   gap: 3px;
   padding: 5px;
   background-color: #aaa9a9;
-  border: inset 4px rgb(152, 181, 197);
+  border: inset 4px var(--app-accent-muted);
   border-radius: 5px;
   font-size: 24px;
   color: rgba(236, 242, 245, 0.9);
-  height: 55px;
-  max-height: 55px;
+  height: var(--app-density-results-height);
+  max-height: var(--app-density-results-height);
 }
 
 .detailsBorder {
@@ -368,7 +453,7 @@ main {
   background-color: rgb(212, 212, 212);
   flex-grow: 1;
   flex-shrink: 0;
-  border: ridge 5px rgb(152, 181, 197);
+  border: ridge 5px var(--app-accent-muted);
 }
 
 #marksExtra {
@@ -386,7 +471,7 @@ main {
 #linkSelector {
   border: ridge;
   border-radius: 5px;
-  border-color: #579fda;
+  border-color: var(--app-accent);
   background-color: #f4f4f4;
   padding: 5px;
   max-height: none;
@@ -397,7 +482,7 @@ main {
 }
 
 #linkSelector:hover {
-  background-color: #579fda;
+  background-color: var(--app-accent);
   color: #ffffff;
 }
 
@@ -405,8 +490,8 @@ main {
   display: flex;
   flex-direction: column;
   max-width: 100%;
-  min-height: 120px;
-  max-height: 225px;
+  min-height: var(--app-density-item-min-height);
+  max-height: var(--app-density-item-max-height);
   background-color: white;
   padding: 10px;
   border-radius: 5px;
@@ -436,7 +521,7 @@ main {
 }
 
 .input-focus {
-  background-color: lightblue;
+  background-color: var(--app-accent-soft);
 }
 
 .adjustmentNote {
@@ -447,8 +532,9 @@ main {
 
 #add-item-button {
   margin: 8px;
-  background-color: rgb(152, 181, 197);
+  background-color: var(--app-accent-muted);
   border: ridge;
+  border-color: var(--app-accent-border);
   border-radius: 5px;
   min-height: 34px;
   padding: 6px 12px;
@@ -457,8 +543,76 @@ main {
 
 #add-item-button:hover {
   color: rgb(227, 255, 227);
-  border-color: rgb(62, 211, 107);
-  background-color: rgb(113, 153, 170);
+  border-color: var(--app-accent-border);
+  background-color: var(--app-accent-active);
+}
+
+body[data-density="compact"] {
+  --app-density-panel-padding: 4px;
+  --app-density-section-gap: 3px;
+  --app-density-input-height: 26px;
+  --app-density-button-height: 28px;
+  --app-density-results-height: 42px;
+  --app-density-item-min-height: 92px;
+  --app-density-item-max-height: 185px;
+  line-height: 1.24;
+}
+
+body[data-density="compact"] th,
+body[data-density="compact"] td {
+  padding: 3px 5px;
+}
+
+body[data-density="compact"] .detailsAccent {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+body[data-density="compact"] .itemBox {
+  padding: 5px;
+}
+
+body[data-density="compact"] .invoiceDetailsContainer p {
+  margin: 1px 0;
+}
+
+body[data-density="compact"] .demoActions {
+  gap: 5px;
+  margin-top: 3px;
+}
+
+body[data-density="compact"] .enterItemContainer {
+  gap: 8px;
+}
+
+body[data-density="compact"] .entryField {
+  gap: 2px;
+}
+
+body[data-density="compact"] .searchContainer {
+  margin-bottom: 2px;
+}
+
+body[data-density="compact"] .totalContainer {
+  margin-top: 1px;
+}
+
+body[data-density="compact"] #add-item-button {
+  margin: 4px 8px;
+  min-height: 28px;
+  padding: 4px 10px;
+}
+
+body[data-text-size="large"] {
+  --app-text-size: 1.08rem;
+}
+
+body[data-text-size="large"] .detailsAccent {
+  font-size: 30px;
+}
+
+body[data-density="compact"][data-text-size="large"] .detailsAccent {
+  font-size: 24px;
 }
 
 .footer {
