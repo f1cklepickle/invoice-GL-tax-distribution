@@ -161,7 +161,7 @@
             <div class="invoiceDetailsContainer">
               <div class="totalContainer">
                 <label for="inputTotal">Invoice Total:</label>
-                <input type="text" id="inputTotal">
+                <input type="text" id="inputTotal" tabindex="1">
                 <span id="invoice-total"></span>
               </div>
 
@@ -172,7 +172,7 @@
               <p id="adjustment-note" class="adjustmentNote"></p>
               <div class="invoiceActionDock">
                 <aside id="invoice-action-panel" class="invoiceActionPanel" aria-label="Invoice actions">
-                  <button id="invoice-action-toggle" class="invoiceActionToggle" type="button" aria-label="Open invoice actions" aria-controls="invoice-action-panel" aria-expanded="false">
+                  <button id="invoice-action-toggle" class="invoiceActionToggle" type="button" aria-label="Open invoice actions" aria-controls="invoice-action-panel" aria-expanded="false" tabindex="7">
                     <span aria-hidden="true">›</span>
                   </button>
 
@@ -180,6 +180,7 @@
                     <h2>Invoice Actions</h2>
                     <button id="reset-invoice-button" type="button">Reset Invoice</button>
                     <button id="load-demo-button" type="button">Load Demo</button>
+                    <button id="show-summary-button" type="button">Summary</button>
                   </div>
                 </aside>
               </div>
@@ -188,8 +189,8 @@
             <div class="searchBoxContainer">
               <div class="searchContainer">
                 <label for="inputSearch">Search item cost:</label>
-                <input type="text" id="inputSearch">
-                <button class="searchBtn" type="button">Search</button>
+                <input type="text" id="inputSearch" tabindex="8">
+                <button class="searchBtn" type="button" tabindex="9">Search</button>
               </div>
               <div class="resultsContainer" aria-live="polite">Search Results</div>
             </div>
@@ -198,7 +199,7 @@
           <section class="enterItemContainer" aria-label="Add invoice line item">
             <div class="entryField">
               <label for="inputType">Line Type:</label>
-              <select id="inputType">
+              <select id="inputType" tabindex="6">
                 <option value="purchase">Purchase</option>
                 <option value="refund">Refund</option>
               </select>
@@ -206,19 +207,19 @@
 
             <div class="entryField">
               <label for="inputGl">Enter GL Number:</label>
-              <input type="text" id="inputGl">
+              <input type="text" id="inputGl" tabindex="2">
             </div>
 
             <div class="entryField">
               <label for="inputCost">Enter Item Cost:</label>
-              <input type="text" id="inputCost">
+              <input type="text" id="inputCost" tabindex="3">
             </div>
 
             <div class="entryField">
               <label for="inputName">Enter Item Name: <span>(Optional)</span></label>
               <div class="autocompleteField">
                 <span id="item-name-suggestion" class="itemNameSuggestion" aria-hidden="true"></span>
-                <input type="text" id="inputName" autocomplete="off">
+                <input type="text" id="inputName" autocomplete="off" tabindex="4">
               </div>
             </div>
           </section>
@@ -251,17 +252,32 @@
                 </label>
               </div>
             </div>
-            <div id="detailsContentContainer">
-              <aside id="bookmarkList" aria-label="GL bookmarks">
-                <ul id="marksExtra"></ul>
-              </aside>
 
-              <div id="detailsContainer">
-                <table id="gl-table"></table>
+            <div id="gl-details-view" class="detailsView">
+              <div id="detailsContentContainer">
+                <aside id="bookmarkList" aria-label="GL bookmarks">
+                  <ul id="marksExtra"></ul>
+                </aside>
+
+                <div id="detailsContainer">
+                  <table id="gl-table"></table>
+                </div>
               </div>
+
+              <button id="add-item-button" type="button" onclick="addNewGl()" tabindex="5">Add New Item</button>
             </div>
 
-            <button id="add-item-button" type="button" onclick="addNewGl()">Add New Item</button>
+            <section id="summary-view" class="invoiceSummaryCopy detailsView" aria-label="Coded invoice summary" hidden>
+              <div class="summaryCopyHeader">
+                <button id="return-to-details-button" class="summaryReturnButton" type="button" aria-label="Return to GL details">x</button>
+                <h3>Coded Invoice Summary</h3>
+                <div class="summaryCopyActions">
+                  <button id="copy-summary-button" type="button" disabled>Copy Summary</button>
+                  <span id="copy-summary-status" aria-live="polite"></span>
+                </div>
+              </div>
+              <textarea id="invoice-summary-text" readonly placeholder="Add invoice items to build a coded summary."></textarea>
+            </section>
           </section>
         </main>
       </div>
