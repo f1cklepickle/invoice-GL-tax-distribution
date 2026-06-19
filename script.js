@@ -115,6 +115,7 @@ const searchValue = document.getElementById("inputSearch");
 const searchBtn = document.querySelector(".searchBtn");
 const loadDemoButton = document.getElementById("load-demo-button");
 const resetInvoiceButton = document.getElementById("reset-invoice-button");
+const showSummaryButton = document.getElementById("show-summary-button");
 const invoiceActionPanel = document.getElementById("invoice-action-panel");
 const invoiceActionToggle = document.getElementById("invoice-action-toggle");
 const toolbarMenuButtons = document.querySelectorAll(".toolbarMenuButton");
@@ -151,6 +152,12 @@ const shortcutStatus = document.getElementById("shortcut-status");
 const glSortControl = document.getElementById("gl-sort-control");
 const itemSortControl = document.getElementById("item-sort-control");
 const namedItemsFirstControl = document.getElementById("named-items-first-control");
+const invoiceSummaryText = document.getElementById("invoice-summary-text");
+const copySummaryButton = document.getElementById("copy-summary-button");
+const copySummaryStatus = document.getElementById("copy-summary-status");
+const glDetailsView = document.getElementById("gl-details-view");
+const summaryView = document.getElementById("summary-view");
+const returnToDetailsButton = document.getElementById("return-to-details-button");
 let profilePreferences = { ...DEFAULT_PROFILE_PREFERENCES };
 let invoiceSettings = { ...DEFAULT_INVOICE_SETTINGS };
 let shortcuts = {
@@ -207,6 +214,17 @@ function toggleInvoiceActionPanel() {
   invoiceActionPanel.classList.toggle("isOpen", shouldOpen);
   invoiceActionToggle.setAttribute("aria-expanded", String(shouldOpen));
   invoiceActionToggle.setAttribute("aria-label", shouldOpen ? "Close invoice actions" : "Open invoice actions");
+}
+
+function showSummaryView() {
+  glDetailsView.hidden = true;
+  summaryView.hidden = false;
+  closeToolbarMenu();
+}
+
+function showGlDetailsView() {
+  summaryView.hidden = true;
+  glDetailsView.hidden = false;
 }
 
 function canUseLocalStorage() {
@@ -739,6 +757,34 @@ function acceptItemNameSuggestion() {
   return true;
 }
 
+async function copyInvoiceSummary() {
+  const summaryText = invoiceSummaryText.value.trim();
+
+  if (!summaryText) {
+    copySummaryStatus.innerText = "Nothing to copy.";
+    return;
+  }
+
+  try {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      await navigator.clipboard.writeText(summaryText);
+    } else {
+      invoiceSummaryText.focus();
+      invoiceSummaryText.select();
+
+      if (!document.execCommand("copy")) {
+        throw new Error("Copy command unavailable");
+      }
+    }
+
+    copySummaryStatus.innerText = "Summary copied.";
+  } catch (error) {
+    invoiceSummaryText.focus();
+    invoiceSummaryText.select();
+    copySummaryStatus.innerText = "Copy unavailable.";
+  }
+}
+
 function sortGlDetails(glDetails) {
   const sortedGlDetails = [...glDetails];
 
@@ -778,6 +824,58 @@ function getSortedItemsForGl(glNumber) {
   });
 }
 
+function getSortedGlDetails(invoiceTotal) {
+  return sortGlDetails(distributeTaxByGl({
+    invoiceTotal,
+    items: list,
+  }));
+}
+
+function getDisplayItemName(itemName) {
+  const normalizedItemName = String(itemName || "").trim();
+
+  return normalizedItemName || "(No item name)";
+}
+
+function buildInvoiceSummaryText({ invoiceTotal, purchaseSubtotalCents, refundTotalCents, subtotalCents, taxCents, glDetails }) {
+  const summaryLines = [
+    "Invoice Coding Summary",
+    "",
+    `Invoice Total: ${formatCents(toCents(invoiceTotal))}`,
+    `Purchase Subtotal: ${formatCents(purchaseSubtotalCents)}`,
+    `Refunds/Credits: ${formatCents(refundTotalCents)}`,
+    `Net Item Subtotal: ${formatCents(subtotalCents)}`,
+    `Tax / Difference: ${formatCents(taxCents)}`,
+  ];
+  const adjustmentNote = getSmallDifferenceNotice(taxCents);
+
+  if (adjustmentNote) {
+    summaryLines.push(adjustmentNote);
+  }
+
+  glDetails.forEach((gl) => {
+    summaryLines.push(
+      "",
+      `GL ${gl.glNumber}`,
+      `GL Subtotal: ${gl.glTotal}`,
+      `GL Tax: ${gl.glTax}`,
+      `GL Total: ${gl.glAfterTax}`,
+    );
+
+    getSortedItemsForGl(gl.glNumber).forEach((item) => {
+      const itemType = item.itemType === "refund" ? "Refund" : "Purchase";
+      summaryLines.push(`- ${itemType} | ${item.itemCost} | ${getDisplayItemName(item.itemName)}`);
+    });
+  });
+
+  return summaryLines.join("\n");
+}
+
+function updateInvoiceSummary(summaryText = "") {
+  invoiceSummaryText.value = summaryText;
+  copySummaryButton.disabled = summaryText.trim() === "";
+}
+
 function createInvoiceItem({ itemGL, itemType, itemName, itemCost }) {
   const nextItemId = itemIdNum;
   const newItem = {
@@ -802,6 +900,8 @@ function resetRenderedInvoice() {
   document.getElementById("adjustment-note").innerText = "";
   document.querySelector("#marksExtra").innerHTML = "";
   document.querySelector("#gl-table").innerHTML = "";
+  updateInvoiceSummary();
+  copySummaryStatus.innerText = "";
 }
 
 function renderInvoice() {
@@ -829,9 +929,14 @@ function renderInvoice() {
   const glTable = document.querySelector("#gl-table");
   glTable.style.cssText = "width: 100%;";
 
-  const glDetails = sortGlDetails(distributeTaxByGl({
+  const glDetails = getSortedGlDetails(total);
+  updateInvoiceSummary(buildInvoiceSummaryText({
     invoiceTotal: total,
-    items: list,
+    purchaseSubtotalCents,
+    refundTotalCents,
+    subtotalCents: subTotalCents,
+    taxCents,
+    glDetails,
   }));
 
   glDetails.forEach((gl) => {
@@ -1198,6 +1303,9 @@ resetInvoiceSettingsButton.addEventListener("click", function () {
 menuBackdrop.addEventListener("click", closeToolbarMenu);
 invoiceActionToggle.addEventListener("click", toggleInvoiceActionPanel);
 searchBtn.addEventListener("click", searchList);
+copySummaryButton.addEventListener("click", copyInvoiceSummary);
+showSummaryButton.addEventListener("click", showSummaryView);
+returnToDetailsButton.addEventListener("click", showGlDetailsView);
 addGlShortcutButton.addEventListener("click", addGlShortcut);
 [glShortcutKeyInput, glShortcutNumberInput].forEach((input) => {
   input.addEventListener("keydown", function (event) {
