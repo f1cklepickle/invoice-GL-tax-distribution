@@ -509,6 +509,7 @@ main {
 .enterItemContainer {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   gap: 12px;
   margin: var(--app-density-section-gap) 0;
   padding: var(--app-density-panel-padding);
@@ -526,6 +527,26 @@ main {
 
 .entryField span {
   font-weight: 400;
+}
+
+.entryStatus {
+  flex-basis: 100%;
+  min-height: 1.2em;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.entryStatus:empty {
+  display: none;
+}
+
+.entryStatus.isError {
+  color: #ffd2cc;
+}
+
+.entryStatus.isSuccess {
+  color: #d8f1d1;
 }
 
 #inputTotal, #inputType, #inputGl, #inputCost, #inputName {

@@ -110,7 +110,10 @@ const {
 const targetInput = document.querySelectorAll("input");
 const focusTotal = document.querySelector("#inputTotal");
 const itemGlInput = document.getElementById("inputGl");
+const itemCostInput = document.getElementById("inputCost");
 const itemNameInput = document.getElementById("inputName");
+const addItemButton = document.getElementById("add-item-button");
+const entryStatus = document.getElementById("entry-status");
 const searchValue = document.getElementById("inputSearch");
 const searchBtn = document.querySelector(".searchBtn");
 const loadDemoButton = document.getElementById("load-demo-button");
@@ -171,7 +174,7 @@ targetInput.forEach((input) => {
   });
 
   input.addEventListener("blur", function () {
-    input.classList.toggle("input-focus");
+    input.classList.remove("input-focus");
   });
 });
 
@@ -611,8 +614,8 @@ function renderEmptyShortcut(listElement, message) {
 }
 
 function renderShortcuts() {
-  glShortcutList.innerHTML = "";
-  itemNameShortcutList.innerHTML = "";
+  glShortcutList.textContent = "";
+  itemNameShortcutList.textContent = "";
 
   if (shortcuts.gl.length === 0) {
     renderEmptyShortcut(glShortcutList, "No GL shortcuts saved yet.");
@@ -743,6 +746,17 @@ function getItemNameSuggestion(value) {
 
 function updateItemNameSuggestion() {
   itemNameSuggestion.innerText = getItemNameSuggestion(itemNameInput.value);
+}
+
+function showEntryStatus(message, statusType = "error") {
+  entryStatus.innerText = message;
+  entryStatus.classList.toggle("isError", statusType === "error");
+  entryStatus.classList.toggle("isSuccess", statusType === "success");
+}
+
+function clearEntryStatus() {
+  entryStatus.innerText = "";
+  entryStatus.classList.remove("isError", "isSuccess");
 }
 
 function acceptItemNameSuggestion() {
@@ -898,8 +912,8 @@ function resetRenderedInvoice() {
   document.getElementById("subtotal").innerText = "";
   document.getElementById("tax").innerText = "";
   document.getElementById("adjustment-note").innerText = "";
-  document.querySelector("#marksExtra").innerHTML = "";
-  document.querySelector("#gl-table").innerHTML = "";
+  document.querySelector("#marksExtra").textContent = "";
+  document.querySelector("#gl-table").textContent = "";
   updateInvoiceSummary();
   copySummaryStatus.innerText = "";
 }
@@ -966,11 +980,19 @@ function renderInvoice() {
 
     const bookmarkBox = document.querySelector("#marksExtra");
     const glBookmark = document.createElement("li");
-    glBookmark.innerHTML = `<a>GL Number: <strong>${gl.glNumber}</strong> - GL Total: <strong>${gl.glAfterTax}</strong></a>`;
+    const glBookmarkLink = document.createElement("a");
+    const glNumberStrong = document.createElement("strong");
+    const glTotalStrong = document.createElement("strong");
+
+    glNumberStrong.innerText = gl.glNumber;
+    glTotalStrong.innerText = gl.glAfterTax;
+    glBookmarkLink.append("GL Number: ", glNumberStrong, " - GL Total: ", glTotalStrong);
+
     glBookmark.classList.add(`glMark${gl.glNumber}`);
     glBookmark.setAttribute("tabindex", "-1");
     glBookmark.setAttribute("id", "linkSelector");
     glBookmark.setAttribute("href", `#glMark${gl.glNumber}`);
+    glBookmark.appendChild(glBookmarkLink);
 
     glBookmark.addEventListener("click", function (glFocus) {
       glFocus.preventDefault();
@@ -1066,22 +1088,23 @@ function reindexInvoiceItems() {
 
 function addNewGl() {
   const total = document.getElementById("inputTotal").value;
-  const costFocus = document.getElementById("inputCost");
+  const costFocus = itemCostInput;
 
   applyGlShortcutToInput();
   const validation = validateInvoiceEntry({
     invoiceTotal: total,
     itemGL: itemGlInput.value,
-    itemCost: document.getElementById("inputCost").value,
+    itemCost: itemCostInput.value,
     itemType: document.getElementById("inputType").value,
     existingItems: list,
   });
 
   if (!validation.isValid) {
-    alert(validation.message);
+    showEntryStatus(validation.message);
     return;
   }
 
+  clearEntryStatus();
   list.push(createInvoiceItem({
     itemGL: validation.glNumber,
     itemType: validation.itemType,
@@ -1106,9 +1129,10 @@ function loadDemoInvoice() {
   document.getElementById("inputTotal").value = DEMO_INVOICE_TOTAL;
   document.getElementById("inputType").value = "purchase";
   itemGlInput.value = "";
-  document.getElementById("inputCost").value = "";
+  itemCostInput.value = "";
   itemNameInput.value = "";
   updateItemNameSuggestion();
+  clearEntryStatus();
   searchValue.value = "";
   document.querySelector(".resultsContainer").innerText = "Search Results";
 
@@ -1124,9 +1148,10 @@ function resetInvoice() {
   document.getElementById("inputTotal").value = "";
   document.getElementById("inputType").value = "purchase";
   itemGlInput.value = "";
-  document.getElementById("inputCost").value = "";
+  itemCostInput.value = "";
   itemNameInput.value = "";
   updateItemNameSuggestion();
+  clearEntryStatus();
   searchValue.value = "";
   document.querySelector(".resultsContainer").innerText = "Search Results";
   resetRenderedInvoice();
@@ -1303,6 +1328,7 @@ resetInvoiceSettingsButton.addEventListener("click", function () {
 menuBackdrop.addEventListener("click", closeToolbarMenu);
 invoiceActionToggle.addEventListener("click", toggleInvoiceActionPanel);
 searchBtn.addEventListener("click", searchList);
+addItemButton.addEventListener("click", addNewGl);
 copySummaryButton.addEventListener("click", copyInvoiceSummary);
 showSummaryButton.addEventListener("click", showSummaryView);
 returnToDetailsButton.addEventListener("click", showGlDetailsView);
